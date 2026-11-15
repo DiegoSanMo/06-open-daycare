@@ -57,7 +57,9 @@ Daycare app (`open-daycare`) built from the static prototypes in `references/`:
 
 ## Spec workflow
 
-This repo ships repo-local skills (`.agents/skills/`, pinned in `skills-lock.json`): `/spec` designs a spec at `specs/NN-slug.md`, `/spec-impl` implements only specs marked `Approved` on branch `spec-NN-slug`. `specs/` and `specs/.spec-config.yml` do not exist yet; the skills create them. Check the spec state before implementing.
+This repo ships repo-local skills (`.agents/skills/`, pinned in `skills-lock.json`): `/spec` designs a spec at `specs/NN-slug.md`, `/spec-impl` implements only specs marked `Approved` on branch `spec-NN-slug`. `specs/.spec-config.yml` controls branch creation and per-step commits. Check the spec state before implementing.
+
+The project also ships the `spec-verifier` agent (`.opencode/agents/spec-verifier.md`), a project-level primary agent on a vision model. Select it with Tab and give it the spec (`01-home-feed`, `01`, or the slug): it verifies every acceptance criterion (commands, Context7 for Next.js conventions, Playwright MCP for screens), fixes real deviations, ticks the checked items with evidence, and appends a `## Verification` section. It never edits criteria, commits, or changes the spec `Status` without asking.
 
 ## MCPs
 
