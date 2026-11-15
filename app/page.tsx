@@ -1,3 +1,5 @@
+import { PostCard } from "./_components/PostCard";
+
 export default function Home() {
   return (
     <div className="flex min-h-screen bg-app">
@@ -112,12 +114,14 @@ export default function Home() {
 
         <div className="mt-2.5 border-t border-line pt-3.5">
           <div className="flex items-center gap-[11px] px-2 py-1.5">
-            <div className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-avatar-teacher font-display text-base font-semibold text-white">
+            <div className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-avatar-teacher font-display text-[16px] font-semibold text-white">
               C
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-extrabold text-ink">Caro Giménez</div>
-              <div className="text-xs text-muted-soft">Maestra · Soles</div>
+              <div className="text-[14px] font-extrabold text-ink">
+                Caro Giménez
+              </div>
+              <div className="text-[12px] text-muted-soft">Maestra · Soles</div>
             </div>
             <a
               title="Cerrar sesión"
@@ -155,7 +159,7 @@ export default function Home() {
           </div>
 
           <a className="mb-6 flex items-center gap-[14px] rounded-[18px] border border-line bg-surface px-[18px] py-[14px] shadow-[0_4px_14px_-10px_rgba(120,90,60,0.4)]">
-            <div className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-avatar-teacher font-display text-base font-semibold text-white">
+            <div className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-avatar-teacher font-display text-[16px] font-semibold text-white">
               C
             </div>
             <span className="flex-1 text-[15px] text-muted-soft">
@@ -177,6 +181,43 @@ export default function Home() {
               </svg>
             </span>
           </a>
+
+          <div className="mb-[14px] flex items-center gap-[14px]">
+            <span className="text-[12.5px] font-extrabold tracking-[0.8px] text-section">
+              PUBLICADO HOY
+            </span>
+            <span className="h-px flex-1 bg-line-strong" />
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <PostCard
+              kind="logro"
+              author="Mateo"
+              time="14:20"
+              audience="familia de Mateo"
+              body="¡Usó el orinal solito por primera vez! Estaba feliz de contárselo a todos. Un gran paso."
+              likes={3}
+              comments={1}
+            />
+            <PostCard
+              kind="actividad"
+              author="Mateo"
+              time="09:40"
+              audience="familia de Mateo"
+              body="Pintamos con témperas esta mañana. Mateo eligió el azul para todo y se concentró un montón mezclando colores."
+              likes={5}
+              comments={2}
+            />
+            <PostCard
+              kind="anuncio"
+              author="Anuncio general"
+              time="07:50"
+              audience="toda la sala"
+              body="El viernes salimos al parque por la mañana. Recuerden mandar gorra y una botellita de agua."
+              likes={8}
+              comments={0}
+            />
+          </div>
         </div>
       </main>
     </div>
