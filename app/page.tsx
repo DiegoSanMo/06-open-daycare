@@ -207,6 +207,7 @@ export default function Home() {
               body="Pintamos con témperas esta mañana. Mateo eligió el azul para todo y se concentró un montón mezclando colores."
               likes={5}
               comments={2}
+              photoLabel="Foto · pintando con témperas"
             />
             <PostCard
               kind="anuncio"
