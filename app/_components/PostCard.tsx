@@ -1,15 +1,4 @@
-export type PostKind = "logro" | "actividad" | "anuncio";
-
-export type PostCardProps = {
-  kind: PostKind;
-  author: string;
-  time: string;
-  audience: string;
-  body: string;
-  likes: number;
-  comments: number;
-  photoLabel?: string;
-};
+import type { FeedPost, PostKind } from "../_data/feed";
 
 const badges: Record<PostKind, { label: string; className: string }> = {
   logro: {
@@ -50,7 +39,7 @@ export function PostCard({
   likes,
   comments,
   photoLabel,
-}: PostCardProps) {
+}: FeedPost) {
   const badge = badges[kind];
   const isAnnouncement = kind === "anuncio";
 
@@ -108,7 +97,10 @@ export function PostCard({
       <p className="text-[15.5px] leading-[1.55] text-ink-body">{body}</p>
 
       {photoLabel ? (
-        <a className="mt-[14px] flex h-[200px] flex-col items-center justify-center gap-2 rounded-2xl border-[1.5px] border-dashed border-photo-line bg-photo-bg text-photo-label">
+        <a
+          aria-disabled="true"
+          className="mt-[14px] flex h-[200px] flex-col items-center justify-center gap-2 rounded-2xl border-[1.5px] border-dashed border-photo-line bg-photo-bg text-photo-label"
+        >
           <svg
             width="30"
             height="30"
@@ -144,14 +136,22 @@ export function PostCard({
           {likes}
         </span>
 
-        <a className="flex items-center gap-[7px] text-[14px] font-bold text-muted">
+        <a
+          aria-disabled="true"
+          className="flex items-center gap-[7px] text-[14px] font-bold text-muted"
+        >
           {commentIcon}
           {comments}
         </a>
 
         <span className="flex-1" />
 
-        <a className="text-[14px] font-extrabold text-brand-strong">Editar</a>
+        <a
+          aria-disabled="true"
+          className="text-[14px] font-extrabold text-brand-strong"
+        >
+          Editar
+        </a>
       </div>
     </article>
   );

@@ -1,10 +1,16 @@
 import { PostCard } from "./_components/PostCard";
+import { posts, teacher } from "./_data/feed";
+
+const firstName = teacher.name.split(" ")[0];
 
 export default function Home() {
   return (
     <div className="flex min-h-screen bg-app">
       <aside className="sticky top-0 flex h-screen w-[248px] flex-none flex-col border-r border-line bg-surface px-4 py-6">
-        <a className="flex items-center gap-[11px] px-2 pb-[22px] pt-1">
+        <a
+          aria-disabled="true"
+          className="flex items-center gap-[11px] px-2 pb-[22px] pt-1"
+        >
           <div className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-xl bg-linear-[155deg,#F8C3A8,#F2937A]">
             <svg
               width="21"
@@ -25,12 +31,15 @@ export default function Home() {
               OpenDayCare
             </div>
             <div className="mt-0.5 text-[11.5px] text-muted-soft">
-              Sala Soles
+              {teacher.room}
             </div>
           </div>
         </a>
 
-        <a className="mb-[18px] flex w-full items-center justify-center gap-2 rounded-[14px] bg-linear-[180deg,#F4977E,#EE8164] p-3 text-[14.5px] font-extrabold text-white shadow-[0_8px_18px_-8px_rgba(238,129,100,0.75)]">
+        <a
+          aria-disabled="true"
+          className="mb-[18px] flex w-full items-center justify-center gap-2 rounded-[14px] bg-linear-[180deg,#F4977E,#EE8164] p-3 text-[14.5px] font-extrabold text-white shadow-[0_8px_18px_-8px_rgba(238,129,100,0.75)]"
+        >
           <svg
             width="17"
             height="17"
@@ -47,7 +56,10 @@ export default function Home() {
         </a>
 
         <nav className="flex flex-1 flex-col gap-1">
-          <a className="flex items-center gap-3 rounded-xl bg-brand-soft px-3 py-[11px] text-[14.5px] font-extrabold text-brand">
+          <a
+            aria-disabled="true"
+            className="flex items-center gap-3 rounded-xl bg-brand-soft px-3 py-[11px] text-[14.5px] font-extrabold text-brand"
+          >
             <svg
               width="19"
               height="19"
@@ -62,7 +74,10 @@ export default function Home() {
             </svg>
             Feed
           </a>
-          <a className="flex items-center gap-3 rounded-xl bg-transparent px-3 py-[11px] text-[14.5px] font-semibold text-nav">
+          <a
+            aria-disabled="true"
+            className="flex items-center gap-3 rounded-xl bg-transparent px-3 py-[11px] text-[14.5px] font-semibold text-nav"
+          >
             <svg
               width="19"
               height="19"
@@ -79,7 +94,10 @@ export default function Home() {
             </svg>
             Niños
           </a>
-          <a className="flex items-center gap-3 rounded-xl bg-transparent px-3 py-[11px] text-[14.5px] font-semibold text-nav">
+          <a
+            aria-disabled="true"
+            className="flex items-center gap-3 rounded-xl bg-transparent px-3 py-[11px] text-[14.5px] font-semibold text-nav"
+          >
             <svg
               width="19"
               height="19"
@@ -94,7 +112,10 @@ export default function Home() {
             </svg>
             Avisos
           </a>
-          <a className="flex items-center gap-3 rounded-xl bg-transparent px-3 py-[11px] text-[14.5px] font-semibold text-nav">
+          <a
+            aria-disabled="true"
+            className="flex items-center gap-3 rounded-xl bg-transparent px-3 py-[11px] text-[14.5px] font-semibold text-nav"
+          >
             <svg
               width="19"
               height="19"
@@ -115,15 +136,16 @@ export default function Home() {
         <div className="mt-2.5 border-t border-line pt-3.5">
           <div className="flex items-center gap-[11px] px-2 py-1.5">
             <div className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-avatar-teacher font-display text-[16px] font-semibold text-white">
-              C
+              {teacher.initial}
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-[14px] font-extrabold text-ink">
-                Caro Giménez
+                {teacher.name}
               </div>
-              <div className="text-[12px] text-muted-soft">Maestra · Soles</div>
+              <div className="text-[12px] text-muted-soft">{teacher.role}</div>
             </div>
             <a
+              aria-disabled="true"
               title="Cerrar sesión"
               className="flex h-8 w-8 flex-none items-center justify-center rounded-[10px] bg-app text-muted"
             >
@@ -151,16 +173,19 @@ export default function Home() {
               GUARDERÍA · SALA SOLES
             </div>
             <h1 className="font-display text-[30px] font-semibold text-ink">
-              Buenas, Caro
+              Buenas, {firstName}
             </h1>
             <p className="mt-[5px] text-[14.5px] text-muted">
-              12 niños · martes 17 jun
+              {teacher.childrenCount} niños · {teacher.dateLabel}
             </p>
           </div>
 
-          <a className="mb-6 flex items-center gap-[14px] rounded-[18px] border border-line bg-surface px-[18px] py-[14px] shadow-[0_4px_14px_-10px_rgba(120,90,60,0.4)]">
+          <a
+            aria-disabled="true"
+            className="mb-6 flex items-center gap-[14px] rounded-[18px] border border-line bg-surface px-[18px] py-[14px] shadow-[0_4px_14px_-10px_rgba(120,90,60,0.4)]"
+          >
             <div className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-avatar-teacher font-display text-[16px] font-semibold text-white">
-              C
+              {teacher.initial}
             </div>
             <span className="flex-1 text-[15px] text-muted-soft">
               Compartí un momento…
@@ -190,34 +215,9 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <PostCard
-              kind="logro"
-              author="Mateo"
-              time="14:20"
-              audience="familia de Mateo"
-              body="¡Usó el orinal solito por primera vez! Estaba feliz de contárselo a todos. Un gran paso."
-              likes={3}
-              comments={1}
-            />
-            <PostCard
-              kind="actividad"
-              author="Mateo"
-              time="09:40"
-              audience="familia de Mateo"
-              body="Pintamos con témperas esta mañana. Mateo eligió el azul para todo y se concentró un montón mezclando colores."
-              likes={5}
-              comments={2}
-              photoLabel="Foto · pintando con témperas"
-            />
-            <PostCard
-              kind="anuncio"
-              author="Anuncio general"
-              time="07:50"
-              audience="toda la sala"
-              body="El viernes salimos al parque por la mañana. Recuerden mandar gorra y una botellita de agua."
-              likes={8}
-              comments={0}
-            />
+            {posts.map((post) => (
+              <PostCard key={post.id} {...post} />
+            ))}
           </div>
         </div>
       </main>
