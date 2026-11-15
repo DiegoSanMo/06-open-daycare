@@ -29,6 +29,46 @@ Before the final response, run one reporting pass. If candidates remain, from th
 
 <!-- END:nextjs-agent-feedback -->
 
+## What this is
+
+Daycare app (`open-daycare`) built from the static prototypes in `references/`:
+
+- `references/pantallas/*.dc.html` — 15 screen prototypes plus `index.dc.html`, a catalog of the rest (login, staff feed, compose, child profiles, parent feed, notices, daily summary, account). Plain HTML with inline styles, rendered by `support.js`; open them directly in a browser.
+- `references/screenshots/*.png` — rendered captures of those screens.
+
+`app/` is still the stock create-next-app page, so building a screen means translating a prototype into `app/` components — do not import `references/` files or `support.js`, and do not copy their inline styles verbatim (the app uses Tailwind). The prototypes all load Fredoka + Nunito; the starter layout loads Geist instead.
+
+## Commands
+
+- `npm run dev` — dev server (Turbopack is the default in Next 16; no `--turbopack` flag).
+- `npm run lint` — bare `eslint` over the whole repo, including the generated `references/pantallas/support.js` (its header says "do not edit"), which has 2 pre-existing errors (`react/no-deprecated`, `no-assign-module-variable`). Lint only what you changed (`npx eslint app`). `next lint` was removed in Next 16.
+- `npx tsc --noEmit` — typecheck. Depends on generated types in `.next/types`; if `LayoutProps`/`PageProps` are unresolved, run `npx next typegen` or start the dev server.
+- `npm run build` — production build.
+- No test suite, formatter, or CI workflows exist yet.
+
+## Next.js 16 gotchas in this repo
+
+- `next.config.ts` enables `cacheComponents` + `partialPrefetching`. Uncached async data and `cookies()`/`headers()` reads must sit inside `<Suspense>`; use `'use cache'` + `cacheLife()` to cache. `export const runtime` is not allowed (Node only). See `node_modules/next/dist/docs/01-app/01-getting-started/08-caching.md`.
+- `params`, `searchParams`, `cookies()`, `headers()` are async-only. Route props come from generated globals (`PageProps<'/route'>`, `LayoutProps<'/'>`) — `app/layout.tsx` already does this.
+- `middleware.ts` is `proxy.ts` in v16 (Node runtime only).
+- CSS is wired through `turbopack.rules` with `@tailwindcss/turbopack`, not PostCSS. Keep the single `@import "tailwindcss";` entry in `app/globals.css`.
+- The two `BEGIN:nextjs-*` blocks above are rewritten by `next dev`; put project notes outside them.
+- `@/*` maps to the repo root (`@/app/...`), not `src/`. There is no `src/`.
+
+## Spec workflow
+
+This repo ships repo-local skills (`.agents/skills/`, pinned in `skills-lock.json`): `/spec` designs a spec at `specs/NN-slug.md`, `/spec-impl` implements only specs marked `Approved` on branch `spec-NN-slug`. `specs/` and `specs/.spec-config.yml` do not exist yet; the skills create them. Check the spec state before implementing.
+
 ## MCPs
 
 - Playwright Screenshots y cualquier cosa relacionada a Playwright tienen que estar en la carpeta .playwrights-mcp
+- Context7 usaremos esta mcp para traer la documentacion actualizada del framework.
+- Actual Playwright output is tracked in `.playwright-mcp/`, while `.gitignore` only lists `.playwrights-mcp/*` (extra `s`), so new screenshots and logs show up in `git status` — don't commit them.
+
+## Spec Driven Development - Skills 
+- /spec Usaremos esta skill para crear las especificaciones.
+- /spec-impl Usaremos esta skill para hacer las implementaciones.
+
+## Reglas de codigo
+
+- Usar codigo limpio, nombres, variables, funciones, etc en ingles 
