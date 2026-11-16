@@ -1,7 +1,7 @@
 ---
 description: Verifies a spec's acceptance criteria end to end (commands, Next.js docs via Context7, screens via Playwright MCP), fixes real deviations, and marks the checklist with evidence.
 mode: primary
-model: opencode/qwen3.8-flash
+model: opencode/nemotron-3.5-super-vl-free
 color: "#D9583C"
 permissions:
   - action: read
@@ -209,7 +209,7 @@ spec:
 ```md
 ## Verification
 
-> **Date:** YYYY-MM-DD · **Verified by:** spec-verifier (`opencode/qwen3.8-flash`)
+> **Date:** YYYY-MM-DD · **Verified by:** spec-verifier (`opencode/nemotron-3.5-super-vl-free`)
 > **Result:** 10/12 criteria passed
 
 | # | Criterion | Result | Evidence |

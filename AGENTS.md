@@ -59,7 +59,12 @@ Daycare app (`open-daycare`) built from the static prototypes in `references/`:
 
 This repo ships repo-local skills (`.agents/skills/`, pinned in `skills-lock.json`): `/spec` designs a spec at `specs/NN-slug.md`, `/spec-impl` implements only specs marked `Approved` on branch `spec-NN-slug`. `specs/.spec-config.yml` controls branch creation and per-step commits. Check the spec state before implementing.
 
-The project also ships the `spec-verifier` agent (`.opencode/agents/spec-verifier.md`), a project-level primary agent on a vision model. Select it with Tab and give it the spec (`01-home-feed`, `01`, or the slug): it verifies every acceptance criterion (commands, Context7 for Next.js conventions, Playwright MCP for screens), fixes real deviations, ticks the checked items with evidence, and appends a `## Verification` section. It never edits criteria, commits, or changes the spec `Status` without asking.
+## Spec verifier
+
+- **Agent:** `spec-verifier` (`.opencode/agents/spec-verifier.md`), project-level primary agent on `opencode/nemotron-3.5-super-vl-free`.
+- **How to invoke:** select the `spec-verifier` agent with **Tab** and pass the spec to verify (`01-home-feed`, `01`, `home-feed`, or the full file name).
+- **What it does:** validates the spec is Approved/Implemented, builds a verification matrix, checks Next.js conventions with Context7, runs static checks (`npx eslint app`, `npx tsc --noEmit`, `npm run build`), performs visual checks with Playwright MCP when applicable, fixes real deviations, ticks acceptance criteria with evidence, and appends/replaces a `## Verification` section.
+- **Safety:** it never edits criteria/scope/decisions, never commits/pushes/switches branches, never changes `Status` without asking, and does not leave dev servers or browsers running.
 
 ## MCPs
 
@@ -67,9 +72,10 @@ The project also ships the `spec-verifier` agent (`.opencode/agents/spec-verifie
 - Context7 usaremos esta mcp para traer la documentacion actualizada del framework.
 - Actual Playwright output is tracked in `.playwright-mcp/`, while `.gitignore` only lists `.playwrights-mcp/*` (extra `s`), so new screenshots and logs show up in `git status` — don't commit them.
 
-## Spec Driven Development - Skills 
-- /spec Usaremos esta skill para crear las especificaciones.
-- /spec-impl Usaremos esta skill para hacer las implementaciones.
+## Spec Driven Development - Skills / Commands
+- `/spec` — skill para crear las especificaciones.
+- `/spec-impl` — skill para implementar specs aprobadas.
+- **Spec verifier** — no es una skill slash; se invoca seleccionando el agente `spec-verifier` con **Tab** y pasando el spec (ej. `01-home-feed`, `01` o el slug). Verifica criterios de aceptación, corrige desviaciones reales y documenta evidencia en `## Verification`.
 
 ## Reglas de codigo
 

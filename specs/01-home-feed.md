@@ -94,18 +94,18 @@ Valores tomados de `references/pantallas/feed.dc.html`; el resto de las sombras 
 
 ## Acceptance criteria
 
-- [ ] A 1440 px de ancho, el fondo es `#F6ECDF`, la sidebar mide 248 px con fondo `#FFFDF9` y borde derecho `#ECE0D0`.
-- [ ] El contenido principal está centrado con ancho máximo 760 px y padding 34/40/80.
-- [ ] Títulos, marca y avatares usan Fredoka; el resto usa Nunito. No se ve Geist ni Arial.
-- [ ] Aparecen exactamente 3 posts en orden: logro (3 likes, 1 comentario), actividad (5/2 con placeholder de foto) y anuncio (8/0).
-- [ ] Los badges dicen LOGRO, ACTIVIDAD y ANUNCIO con sus colores verde/azul/azul y punto del mismo color.
-- [ ] "Feed" está activo en la sidebar (`#FBE3D8` / `#D9583C`); los demás ítems son `#6E6359`.
-- [ ] La caja "Compartí un momento…" y el CTA "Nueva publicación" tienen los degradados y sombras del prototipo.
-- [ ] El scroll ocurre dentro del `main`, manteniendo la sidebar fija.
-- [ ] Ningún enlace navega a una ruta inexistente.
-- [ ] La página no usa estado ni `"use client"`; es un Server Component estático.
-- [ ] `npx eslint app`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
-- [ ] No hay errores ni warnings nuevos en la consola del navegador.
+- [x] A 1440 px de ancho, el fondo es `#F6ECDF`, la sidebar mide 248 px con fondo `#FFFDF9` y borde derecho `#ECE0D0`. ✅ `bgBody rgb(246,236,223)`, `sidebarWidth 248px`, `sidebarBg rgb(255,253,249)`, `sidebarBorderRight rgb(236,224,208)` — Playwright computed styles at 1440×900 (`.playwrights-mcp/home-feed-1440.png`)
+- [x] El contenido principal está centrado con ancho máximo 760 px y padding 34/40/80. ✅ `contentWidth 760px`, `contentPadding 34px 40px 80px` — Playwright computed styles
+- [x] Títulos, marca y avatares usan Fredoka; el resto usa Nunito. No se ve Geist ni Arial. ✅ `h1 Fredoka`, `body Nunito`, 0 visible elements render Geist/Arial — Playwright computed styles
+- [x] Aparecen exactamente 3 posts en orden: logro (3 likes, 1 comentario), actividad (5/2 con placeholder de foto) y anuncio (8/0). ✅ `postCount 3`, order LOGRO/3/1, ACTIVIDAD/5/2/photo, ANUNCIO/8/0 — Playwright DOM + computed styles
+- [x] Los badges dicen LOGRO, ACTIVIDAD y ANUNCIO con sus colores verde/azul/azul y punto del mismo color. ✅ LOGRO `rgb(207,235,216)`/`rgb(62,155,108)` = `#CFEBD8`/`#3E9B6C`, dot `bg-current` — Playwright computed styles
+- [x] "Feed" está activo en la sidebar (`#FBE3D8` / `#D9583C`); los demás ítems son `#6E6359`. ✅ `feedBg rgb(251,227,216)`, `feedColor rgb(217,88,60)`, `ninosColor rgb(110,99,89)` — Playwright computed styles
+- [x] La caja "Compartí un momento…" y el CTA "Nueva publicación" tienen los degradados y sombras del prototipo. ✅ `bg-linear-[180deg,#F4977E,#EE8164]` + `shadow-[0_8px_18px_-8px_...]` on CTA; compose `bg-surface` + `shadow-[0_4px_14px_-10px_...]` — source `app/page.tsx`
+- [x] El scroll ocurre dentro del `main`, manteniendo la sidebar fija. ✅ `main overflow-y auto`, sidebar `sticky top-0 h-screen` — Playwright computed styles + source `app/page.tsx`
+- [x] Ningún enlace navega a una ruta inexistente. ✅ every `<a>` has `href: null` and `aria-disabled="true"` (14 anchors) — Playwright DOM
+- [x] La página no usa estado ni `"use client"`; es un Server Component estático. ✅ `"use client"` not present; no hooks/state — source `app/page.tsx`, `PostCard.tsx`
+- [x] `npx eslint app`, `npx tsc --noEmit` y `npm run build` terminan sin errores. ✅ eslint clean, tsc clean, `next build` succeeded (static prerender `/`)
+- [x] No hay errores ni warnings nuevos en la consola del navegador. ✅ 0 errors, 0 warnings at 1440×900 (only Next.js HMR/devtools info logs) — Playwright console messages
 
 ## Decisions
 
@@ -136,3 +136,24 @@ Valores tomados de `references/pantallas/feed.dc.html`; el resto de las sombras 
 - Pantallas Niños, Avisos, Mi cuenta, Crear publicación y detalle.
 - Versión móvil o tablet.
 - Imágenes reales o carga de archivos.
+
+## Verification
+
+> **Date:** 2026-11-15 · **Verified by:** spec-verifier (`opencode/nemotron-3.5-super-vl-free`)
+> **Result:** 12/12 criteria passed
+
+| # | Criterion (paraphrase) | Result | Evidence |
+| --- | --- | --- | --- |
+| 1 | Fondo #F6ECDF, sidebar 248px #FFFDF9 con borde #ECE0D0 | ✅ Pass | Computed styles at 1440×900; `.playwrights-mcp/home-feed-1440.png` |
+| 2 | Contenido max-width 760px, padding 34/40/80 | ✅ Pass | `contentWidth 760px`, `contentPadding 34px 40px 80px` |
+| 3 | Fredoka para títulos/marca/avatares; Nunito resto; sin Geist ni Arial | ✅ Pass | `h1 Fredoka`, `body Nunito`, 0 visible elements in Geist/Arial |
+| 4 | 3 posts en orden: logro 3/1, actividad 5/2+foto, anuncio 8/0 | ✅ Pass | `postCount 3`, order and counters from DOM |
+| 5 | Badges LOGRO/ACTIVIDAD/ANUNCIO con colores y punto | ✅ Pass | LOGRO `#CFEBD8`/`#3E9B6C`, dot `bg-current` |
+| 6 | "Feed" activo `#FBE3D8`/`#D9583C`; resto `#6E6359` | ✅ Pass | Computed styles for active/inactive nav items |
+| 7 | Caja compose y CTA con degradados/sombras del prototipo | ✅ Pass | Source `app/page.tsx` gradients + shadows |
+| 8 | Scroll dentro del `main`, sidebar fija | ✅ Pass | `main overflow-y auto`, sidebar `sticky top-0 h-screen` |
+| 9 | Ningún enlace navega a ruta inexistente | ✅ Pass | 14 anchors, all `href: null` + `aria-disabled="true"` |
+| 10 | Sin estado ni `"use client"`; Server Component estático | ✅ Pass | Source `app/page.tsx`, `PostCard.tsx` |
+| 11 | eslint / tsc / build sin errores | ✅ Pass | `npx eslint app` clean, `tsc --noEmit` clean, `next build` static OK |
+| 12 | Sin errores ni warnings en consola | ✅ Pass | 0 errors / 0 warnings at 1440×900 |
+
