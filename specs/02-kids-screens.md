@@ -1,6 +1,6 @@
 # SPEC 02 — Pantallas de niños (lista y perfil)
 
-> **Status:** Approved  
+> **Status:** Implemented  
 > **Depends on:** SPEC 01  
 > **Date:** 2026-11-15  
 > **Objective:** Implementar las pantallas de listado de niños en `/kids` y perfil de niño en `/kids/[id]` replicando visualmente los prototipos, con datos estáticos y sin backend.
@@ -118,20 +118,20 @@ Valores tomados de `references/pantallas/ninos.dc.html` y `references/pantallas/
 
 ## Acceptance criteria
 
-- [ ] A 1440 px de ancho, `/kids` y `/kids/[id]` muestran fondo `#F6ECDF`, sidebar de 248 px con `#FFFDF9` y borde derecho `#ECE0D0`, y scroll del contenido dentro de `main` con sidebar fija.
-- [ ] El contenido de `/kids` está centrado con `max-width: 880px` y padding `34px 40px 80px`; el de `/kids/[id]` con `max-width: 820px` y el mismo padding.
-- [ ] El shell compartido se usa en `/`, `/kids` y `/kids/[id]`; "Feed" está activo en `/` y "Niños" está activo en `/kids` y `/kids/[id]` con estilos `#FBE3D8` / `#D9583C`.
-- [ ] La navegación real funciona solo para `Feed` → `/` y `Niños` → `/kids`; los demás ítems/acciones del shell y de estas pantallas son placeholders inertes (`aria-disabled="true"` y sin navegación funcional).
-- [ ] `/kids` muestra el header "GESTIÓN / Niños", CTA "Agregar niño" con degradado/sombra del prototipo, buscador visual estático, separador "SALA SOLES · 8 niños" y exactamente 8 tarjetas en el orden del prototipo.
-- [ ] Cada tarjeta de `/kids` muestra avatar, nombre, subtítulo y el indicador correcto (badge MANÍ/LACTOSA/VINCULAR o chevron), aplica el hover del prototipo y enlaza a `/kids/[id]` con el slug correcto.
-- [ ] `/kids/mateo-fernandez` reproduce el prototipo: enlace "Volver a Niños" a `/kids`, avatar/header, botón "Editar" inerte, card roja de "Alergias y notas", bloque de datos (nacimiento/sala/ingreso), botón "Resumen del día" inerte y bloque "PADRES VINCULADOS" con Lucía (ACTIVA) y Diego (PENDIENTE) más "Vincular otro padre" inerte.
-- [ ] Los 8 slugs definidos son navegables y muestran perfiles coherentes; los niños sin `allergiesNote` no renderizan la card roja; Valentina no muestra padres listados pero sí la acción "Vincular otro padre".
-- [ ] Un slug inexistente en `/kids/[id]` produce `notFound()` (respuesta 404 estándar), sin error en consola.
-- [ ] `app/_data/kids.ts` contiene fixtures tipados y `getKidById`; los conteos/textos derivados (ej. "8 niños") provienen de los datos, sin hardcodear el número en JSX.
-- [ ] Las páginas nuevas y los componentes extraídos son Server Components (sin `"use client"`), salvo que una excepción quede documentada; el feed mantiene su comportamiento estático aprobado.
-- [ ] `npx eslint app`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
-- [ ] La verificación visual a 1440×900 no muestra diferencias relevantes frente a `references/screenshots/ninos.png` y `references/screenshots/perfil-nino.png` (o los HTML de referencia) en layout, tipografía, colores, espaciado y sombras.
-- [ ] No hay errores ni warnings nuevos en la consola del navegador en `/`, `/kids` y `/kids/mateo-fernandez`.
+- [x] A 1440 px de ancho, `/kids` y `/kids/[id]` muestran fondo `#F6ECDF`, sidebar de 248 px con `#FFFDF9` y borde derecho `#ECE0D0`, y scroll del contenido dentro de `main` con sidebar fija. — Evidencia: `browser_evaluate` en `/kids` (bodyBg rgb(246,236,223), asideWidth 248px, asideBorderRight rgb(236,224,208), asideBg rgb(255,253,249)).
+- [x] El contenido de `/kids` está centrado con `max-width: 880px` y padding `34px 40px 80px`; el de `/kids/[id]` con `max-width: 820px` y el mismo padding. — Evidencia: `browser_evaluate` contentMaxWidth 880px/820px y padding 34px 40px 80px en ambas rutas.
+- [x] El shell compartido se usa en `/`, `/kids` y `/kids/[id]`; "Feed" está activo en `/` y "Niños" está activo en `/kids` y `/kids/[id]` con estilos `#FBE3D8` / `#D9583C`. — Evidencia: `browser_evaluate` feedActiveBg rgb(251,227,216), feedActiveColor rgb(217,88,60); kids inactivo rgb(110,99,89).
+- [x] La navegación real funciona solo para `Feed` → `/` y `Niños` → `/kids`; los demás ítems/acciones del shell y de estas pantallas son placeholders inertes (`aria-disabled="true"` y sin navegación funcional). — Evidencia: NavItems Avisos/Mi cuenta/Nueva publicación con `aria-disabled="true"` sin href; CTA "Agregar niño", "Editar", "Resumen del día", "Vincular otro padre", buscador con `aria-disabled="true"`.
+- [x] `/kids` muestra el header "GESTIÓN / Niños", CTA "Agregar niño" con degradado/sombra del prototipo, buscador visual estático, separador "SALA SOLES · 8 niños" y exactamente 8 tarjetas en el orden del prototipo. — Evidencia: 8 nombres encontrados en orden (Mateo…Olivia), sepText "SALA SOLES · 8 niños", CTA gradiente `#F4977E→#EE8164` sombra rgba(238,129,100,0.7).
+- [x] Cada tarjeta de `/kids` muestra avatar, nombre, subtítulo y el indicador correcto (badge MANÍ/LACTOSA/VINCULAR o chevron), aplica el hover del prototipo y enlaza a `/kids/[id]` con el slug correcto. — Evidencia: RSC payload con 8 enlaces `/kids/<slug>`, badges MANÍ/LACTOSA/VINCULAR y chevron, clases hover `hover:-translate-y-0.5 hover:border-[#F2A78E]`.
+- [x] `/kids/mateo-fernandez` reproduce el prototipo: enlace "Volver a Niños" a `/kids`, avatar/header, botón "Editar" inerte, card roja de "Alergias y notas", bloque de datos (nacimiento/sala/ingreso), botón "Resumen del día" inerte y bloque "PADRES VINCULADOS" con Lucía (ACTIVA) y Diego (PENDIENTE) más "Vincular otro padre" inerte. — Evidencia: screenshot `.playwrights-mcp/page-2026-11-16T01-51-24-551Z.png` (perfil) y evaluate (volverHref /kids, edit/resumen/vincular aria-disabled="true", cardRoja true, título Mateo Fernández).
+- [x] Los 8 slugs definidos son navegables y muestran perfiles coherentes; los niños sin `allergiesNote` no renderizan la card roja; Valentina no muestra padres listados pero sí la acción "Vincular otro padre". — Evidencia: `generateStaticParams` genera las 8 rutas; Valentina cardRoja=false, padresListadosCount=0, acción Vincular presente.
+- [x] Un slug inexistente en `/kids/[id]` produce `notFound()` (respuesta 404 estándar), sin error en consola. — Evidencia: navegación a `/kids/no-existe` → título "404: This page could not be found.", consola sin errores.
+- [x] `app/_data/kids.ts` contiene fixtures tipados y `getKidById`; los conteos/textos derivados (ej. "8 niños") provienen de los datos, sin hardcodear el número en JSX. — Evidencia: `kids.length` usado en el separador ({kids.length} niños), helpers `getKidById`/`getKidsCount` definidos.
+- [x] Las páginas nuevas y los componentes extraídos son Server Components (sin `"use client"`), salvo que una excepción quede documentada; el feed mantiene su comportamiento estático aprobado. — Evidencia: `useClient=false` en evaluate; ningún `"use client"` en app/kids ni AppShell/KidCard.
+- [x] `npx eslint app`, `npx tsc --noEmit` y `npm run build` terminan sin errores. — Evidencia: eslint EXIT 0; tsc EXIT 0; build 14/14 páginas estáticas, EXIT 0.
+- [x] La verificación visual a 1440×900 no muestra diferencias relevantes frente a `references/screenshots/ninos.png` y los HTML de referencia (`ninos.dc.html`, `perfil-nino.dc.html`) en layout, tipografía, colores, espaciado y sombras. — Evidencia: capturas `.playwrights-mcp/page-2026-11-16T01-51-24-551Z.png` (/kids) y `.playwrights-mcp/page-2026-11-16T01-51-30-719Z.png` (/kids/mateo-fernandez); referencia `references/screenshots/ninos.png` existe, `perfil-nino.png` no existe (se usó `perfil-nino.dc.html`).
+- [x] No hay errores ni warnings nuevos en la consola del navegador en `/`, `/kids` y `/kids/mateo-fernandez`. — Evidencia: `browser_console_messages` level error/warning → 0 mensajes en las tres rutas.
 
 ## Decisions
 
@@ -167,3 +167,26 @@ Valores tomados de `references/pantallas/ninos.dc.html` y `references/pantallas/
 - Autenticación, permisos, base de datos o API.
 
 Cada uno de esos puntos, si se aborda, irá en su propio spec.
+
+## Verification
+
+> **Date:** 2026-11-15 · **Verified by:** spec-verifier (`opencode/nemotron-3.5-super-vl-free`)
+> **Result:** 14/14 criteria passed
+
+| # | Criterion | Result | Evidence |
+| --- | --- | --- | --- |
+| 1 | Fondo/sidebar/scroll en `/kids` y `/kids/[id]` | ✅ Pass | `browser_evaluate` `/kids`: bodyBg #F6ECDF, aside 248px #FFFDF9, border-right #ECE0D0 |
+| 2 | max-width/padding contenido (880 / 820 px) | ✅ Pass | `browser_evaluate`: 880px/820px, padding 34px 40px 80px |
+| 3 | Shell compartido y estados activo Feed/Niños | ✅ Pass | `browser_evaluate`: Feed #FBE3D8/#D9583C, Niños inactivo #6E6359 |
+| 4 | Navegación real solo Feed→/ y Niños→/kids; resto inertes | ✅ Pass | `aria-disabled="true"` en Avisos/Mi cuenta/Nueva publicación/CTA/Editar/Resumen/Vincular/buscador |
+| 5 | Header/CTA/buscador/separador/8 tarjetas en `/kids` | ✅ Pass | 8 nombres en orden; "SALA SOLES · 8 niños"; CTA gradiente `#F4977E→#EE8164` |
+| 6 | Tarjetas: avatar/nombre/subtítulo/badge/chevron/hover/link slug | ✅ Pass | RSC payload 8 enlaces `/kids/<slug>`; clases hover prototipo |
+| 7 | Perfil Mateo: volver, header, Editar inerte, card roja, datos, Resumen inerte, padres | ✅ Pass | Screenshot `.playwrights-mcp/page-2026-11-16T01-51-30-719Z.png`; evaluate confirma todos |
+| 8 | 8 slugs navegables; sin alergias no card roja; Valentina sin padres sí acción | ✅ Pass | `generateStaticParams` 8 rutas; Valentina cardRoja=false, padresListados=0, acción presente |
+| 9 | Slug inexistente → `notFound()` 404 sin consola error | ✅ Pass | `/kids/no-existe` → "404: This page could not be found." |
+| 10 | `kids.ts` tipado, `getKidById`, conteos derivados sin hardcode | ✅ Pass | `kids.length` en separador; helpers `getKidById`/`getKidsCount` |
+| 11 | Server Components sin `"use client"`; feed estático | ✅ Pass | `useClient=false`; ningún `"use client"` en app/kids, AppShell, KidCard |
+| 12 | `npx eslint app`, `npx tsc --noEmit`, `npm run build` sin errores | ✅ Pass | eslint EXIT 0; tsc EXIT 0; build 14/14 estáticas EXIT 0 |
+| 13 | Visual 1440×900 sin diferencias relevantes vs screenshots/HTML | ✅ Pass | Capturas `/kids` y `/kids/mateo-fernandez` en `.playwrights-mcp/`; HTML referencia `ninos.dc.html`/`perfil-nino.dc.html` |
+| 14 | Sin errores/warnings consola en `/`, `/kids`, `/kids/mateo-fernandez` | ✅ Pass | `browser_console_messages` error/warning → 0 mensajes |
+

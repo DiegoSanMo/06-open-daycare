@@ -1,9 +1,82 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { AppShell } from "../../_components/AppShell";
-import { getKidById } from "../../_data/kids";
+import { getKidById, kids } from "../../_data/kids";
 
-export default async function KidProfilePage({
+function KidProfileFallback() {
+  return (
+    <AppShell active="kids" contentMaxWidth={820}>
+      <div className="mb-5 flex items-center gap-[7px]">
+        <span className="h-[18px] w-[18px] rounded bg-[#E7DAC8]" />
+        <span className="h-4 w-28 rounded bg-[#E7DAC8]" />
+      </div>
+
+      <div className="flex flex-wrap items-start gap-[26px]">
+        <div className="flex min-w-[300px] flex-1 flex-col gap-[18px]">
+          <div className="flex items-center gap-[18px]">
+            <div className="h-[84px] w-[84px] flex-none rounded-full bg-[#E7DAC8]" />
+            <div className="flex-1 space-y-2">
+              <div className="h-7 w-52 rounded bg-[#E7DAC8]" />
+              <div className="h-4 w-36 rounded bg-[#E7DAC8]" />
+            </div>
+            <div className="h-[38px] w-[72px] rounded-xl border-[1.5px] border-line bg-surface" />
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-line bg-surface">
+            <div className="flex justify-between border-b border-line-soft p-[15px_18px]">
+              <span className="h-4 w-36 rounded bg-[#E7DAC8]" />
+              <span className="h-4 w-24 rounded bg-[#E7DAC8]" />
+            </div>
+            <div className="flex justify-between border-b border-line-soft p-[15px_18px]">
+              <span className="h-4 w-12 rounded bg-[#E7DAC8]" />
+              <span className="h-4 w-20 rounded bg-[#E7DAC8]" />
+            </div>
+            <div className="flex justify-between p-[15px_18px]">
+              <span className="h-4 w-16 rounded bg-[#E7DAC8]" />
+              <span className="h-4 w-20 rounded bg-[#E7DAC8]" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex w-[300px] flex-none flex-col gap-[14px]">
+          <div className="h-[46px] w-full rounded-[14px] bg-[#3F362E]/20" />
+          <div className="rounded-2xl border border-line bg-surface p-[16px_18px]">
+            <div className="mb-[14px] h-4 w-40 rounded bg-[#E7DAC8]" />
+            <div className="flex flex-col gap-[14px]">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 flex-none rounded-full bg-[#E7DAC8]" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-28 rounded bg-[#E7DAC8]" />
+                  <div className="h-3 w-24 rounded bg-[#E7DAC8]" />
+                </div>
+                <div className="h-6 w-16 rounded-full bg-[#E7DAC8]" />
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 flex-none rounded-full bg-[#E7DAC8]" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-28 rounded bg-[#E7DAC8]" />
+                  <div className="h-3 w-24 rounded bg-[#E7DAC8]" />
+                </div>
+                <div className="h-6 w-20 rounded-full bg-[#E7DAC8]" />
+              </div>
+              <div className="flex items-center gap-3 pt-2">
+                <div className="h-10 w-10 flex-none rounded-full border-[1.5px] border-dashed border-[#D8CBBA] bg-transparent" />
+                <div className="h-4 w-36 rounded bg-[#E7DAC8]" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </AppShell>
+  );
+}
+
+export function generateStaticParams() {
+  return kids.map((kid) => ({ id: kid.id }));
+}
+
+async function KidProfileContent({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -194,3 +267,16 @@ export default async function KidProfilePage({
     </AppShell>
   );
 }
+
+export default function KidProfilePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense fallback={<KidProfileFallback />}>
+      <KidProfileContent params={params} />
+    </Suspense>
+  );
+}
+

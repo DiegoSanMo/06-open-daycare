@@ -1,6 +1,6 @@
 # SPEC 01 — Home con feed de la sala
 
-> **Status:** Approved 
+> **Status:** Implemented 
 > **Depends on:** —
 > **Date:** 2026-11-14
 > **Objective:** Reemplazar el home por una réplica visual del feed de `references/pantallas/feed.dc.html`, con datos estáticos y sin autenticación ni base de datos.
