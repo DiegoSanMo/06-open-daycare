@@ -1,0 +1,25 @@
+
+> open-daycare@0.1.0 dev
+> next dev
+
+[32m✔[0m [33mConsole Ninja[0m extension is connected to [33mNext.js[0m, see [36mhttps://tinyurl.com/2vt8jxzw[0m
+▲ Next.js 16.4.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.7:3000
+✓ Ready in 525ms
+✓ Running next.config.ts took 22ms
+- Cache Components enabled
+- Partial Prefetching enabled
+- Experiments (use with caution):
+  ✓ agentFeedback
+
+ GET / 200 in 266ms (next.js: 143ms, application-code: 123ms)
+ GET /kids 200 in 51ms (next.js: 7ms, application-code: 44ms)
+ GET /kids/mateo-fernandez 200 in 407ms (next.js: 10ms, generate-params: 344ms, application-code: 52ms)
+ GET /kids 200 in 45ms (next.js: 1.3ms, application-code: 43ms)
+ GET /kids/mateo-fernandez 200 in 49ms (next.js: 2.0ms, generate-params: 1.9ms, application-code: 45ms)
+ GET /kids/no-existe 200 in 67ms (next.js: 3ms, generate-params: 4ms, application-code: 61ms)
+ GET /kids 200 in 46ms (next.js: 1.3ms, application-code: 45ms)
+ GET / 200 in 37ms (next.js: 1.3ms, application-code: 36ms)
+ GET /kids/valentina-soto 200 in 83ms (next.js: 4ms, generate-params: 3ms, application-code: 76ms)
+[?25h
