@@ -1,3 +1,5 @@
+import { teacher } from "./teacher";
+
 export type PostKind = "logro" | "actividad" | "anuncio";
 
 export type FeedPost = {
@@ -12,14 +14,7 @@ export type FeedPost = {
   photoLabel?: string;
 };
 
-export const teacher = {
-  name: "Caro Giménez",
-  role: "Maestra · Soles",
-  initial: "C",
-  room: "Sala Soles",
-  childrenCount: 12,
-  dateLabel: "martes 17 jun",
-} as const;
+export { teacher };
 
 export const posts: FeedPost[] = [
   {
