@@ -1,6 +1,6 @@
 # SPEC 03 — Pantallas de login y activación de cuenta
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 01
 > **Date:** 2026-11-17
 > **Objective:** Implementar las pantallas estáticas de inicio de sesión en `/login` y activación de cuenta en `/activate-account` como réplicas visuales de los prototipos, sin selector de rol, autenticación ni backend.
@@ -87,19 +87,19 @@ Valores tomados de `references/pantallas/login.dc.html` y `activar-cuenta.dc.htm
 
 ## Acceptance criteria
 
-- [ ] `/login` y `/activate-account` renderizan sin errores ni 404.
-- [ ] `/login` no contiene "Personal", "Familia" ni "INGRESO COMO"; no hay botones de selección de rol.
-- [ ] A 1440 px, `/login` muestra la grilla `1.05fr / 1fr`, fondo `#FBF4EC` y panel izquierdo con degradado `155deg`.
-- [ ] El email de `/login` aparece precargado con `caro@opendaycare.com` y el campo de contraseña usa el placeholder de viñetas.
-- [ ] En `/login`, "Iniciar sesión" enlaza a `/` y "Activá tu cuenta" enlaza a `/activate-account`.
-- [ ] "¿Olvidaste tu contraseña?" es inerte (`aria-disabled="true"`, sin `href`).
-- [ ] `/activate-account` muestra la tarjeta de invitación, el código `7K4P9`, el email, la contraseña y la casilla de consentimiento marcada.
-- [ ] En `/activate-account`, "Iniciar sesión" enlaza a `/login` y "Activar mi cuenta" es inerte.
-- [ ] Ambas páginas son Server Components sin `"use client"`, sin hooks ni estado.
-- [ ] Títulos/logo/código usan Fredoka y el resto Nunito; no aparece Geist ni Arial.
-- [ ] `npx eslint app`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
-- [ ] No hay errores ni warnings nuevos en la consola del navegador.
-- [ ] La comparación visual a 1440×900 contra los HTML de referencia no muestra diferencias relevantes.
+- [x] `/login` y `/activate-account` renderizan sin errores ni 404. ✅ `GET /login 200`, `GET /activate-account 200` — `npm run build` (16 páginas estáticas, sin 404)
+- [x] `/login` no contiene "Personal", "Familia" ni "INGRESO COMO"; no hay botones de selección de rol. ✅ `roleWords: []` — Playwright `browser_evaluate` en `/login` (`.playwrights-mcp/verif-login-1440.png`)
+- [x] A 1440 px, `/login` muestra la grilla `1.05fr / 1fr`, fondo `#FBF4EC` y panel izquierdo con degradado `155deg`. ✅ `grid 737.555px 702.445px`, `rootBg rgb(251,244,236)`, `leftBg linear-gradient(155deg,...)` — Playwright computed styles
+- [x] El email de `/login` aparece precargado con `caro@opendaycare.com` y el campo de contraseña usa el placeholder de viñetas. ✅ `email.value "caro@opendaycare.com"`, `pwd.placeholder "••••••••"` — Playwright DOM
+- [x] En `/login`, "Iniciar sesión" enlaza a `/` y "Activá tu cuenta" enlaza a `/activate-account`. ✅ `cta.href "/"`, `linkActivar.href "/activate-account"` — Playwright DOM
+- [x] "¿Olvidaste tu contraseña?" es inerte (`aria-disabled="true"`, sin `href`). ✅ `inerte { text "¿Olvidaste tu contraseña?", href null }` — Playwright DOM
+- [x] `/activate-account` muestra la tarjeta de invitación, el código `7K4P9`, el email, la contraseña y la casilla de consentimiento marcada. ✅ `cardBg rgb(255,255,255)`, `code.value "7K4P9"`, `email.value "lucia.fernandez@gmail.com"`, `pwd.value "contraseña"`, `checkbox.checked true` — Playwright computed styles + DOM (`.playwrights-mcp/verif-activate-account-1440.png`)
+- [x] En `/activate-account`, "Iniciar sesión" enlaza a `/login` y "Activar mi cuenta" es inerte. ✅ `linkLogin.href "/login"`, `cta.href null` (inerte) — Playwright DOM
+- [x] Ambas páginas son Server Components sin `"use client"`, sin hooks ni estado. ✅ `"use client"` ausente en `app/login/page.tsx` y `app/activate-account/page.tsx`; sin `useState`/`useEffect` ni hooks — source
+- [x] Títulos/logo/código usan Fredoka y el resto Nunito; no aparece Geist ni Arial. ✅ `h1 Fredoka`, `h2 Fredoka`, `code Fredoka`, `email/nombre Nunito`, 0 elementos Geist/Arial — Playwright computed styles
+- [x] `npx eslint app`, `npx tsc --noEmit` y `npm run build` terminan sin errores. ✅ eslint EXIT 0; tsc EXIT 0; `next build` EXIT 0, 16 páginas estáticas
+- [x] No hay errores ni warnings nuevos en la consola del navegador. ✅ `browser_console_messages` level warning → 0 mensajes en `/login` y `/activate-account`
+- [x] La comparación visual a 1440×900 contra los HTML de referencia no muestra diferencias relevantes. ✅ `appLogin` vs `refLogin` y `appAct` vs `refAct` coinciden en tipografía, colores, radios, degradados y sombras (única diferencia esperada: ausencia del bloque Personal/Familia por decisión de alcance) — Playwright computed styles + capturas `.playwrights-mcp/verif-login-1440.png`, `verif-activate-account-1440.png`
 
 ## Decisions
 
@@ -131,3 +131,24 @@ Valores tomados de `references/pantallas/login.dc.html` y `activar-cuenta.dc.htm
 - Versión móvil/tablet, imágenes reales ni carga de archivos.
 
 Cada uno de esos puntos, si se aborda, irá en su propio spec.
+
+## Verification
+
+> **Date:** 2026-11-17 · **Verified by:** spec-verifier (`opencode/nemotron-3.5-super-vl-free`)
+> **Result:** 13/13 criteria passed
+
+| # | Criterion | Result | Evidence |
+| --- | --- | --- | --- |
+| 1 | `/login` y `/activate-account` renderizan sin errores ni 404 | ✅ Pass | `GET /login 200`, `GET /activate-account 200` — `next build` EXIT 0, 16 páginas estáticas |
+| 2 | `/login` sin "Personal", "Familia" ni "INGRESO COMO" | ✅ Pass | `roleWords: []` — Playwright `browser_evaluate` `/login` |
+| 3 | Grilla `1.05fr/1fr`, fondo `#FBF4EC`, panel degradado `155deg` | ✅ Pass | `grid 737.555px 702.445px`, `rootBg rgb(251,244,236)`, `leftBg linear-gradient(155deg,#F6A98E,#F2937A,#EC7E62)` — computed styles |
+| 4 | Email precargado `caro@opendaycare.com`, contraseña placeholder viñetas | ✅ Pass | `email.value`, `pwd.placeholder` — Playwright DOM |
+| 5 | "Iniciar sesión" → `/`, "Activá tu cuenta" → `/activate-account` | ✅ Pass | `cta.href "/"`, `linkActivar.href "/activate-account"` — Playwright DOM |
+| 6 | "¿Olvidaste tu contraseña?" inerte (`aria-disabled="true"`, sin `href`) | ✅ Pass | `href: null` — Playwright DOM |
+| 7 | Tarjeta invitación, `7K4P9`, email, contraseña, consentimiento marcado | ✅ Pass | `cardBg rgb(255,255,255)`, `code.value "7K4P9"`, `checkbox.checked true` — computed styles + DOM |
+| 8 | "Iniciar sesión" → `/login`, "Activar mi cuenta" inerte | ✅ Pass | `linkLogin.href "/login"`, `cta.href null` — Playwright DOM |
+| 9 | Server Components sin `"use client"`, sin hooks ni estado | ✅ Pass | `"use client"` ausente; sin `useState`/`useEffect` — source `app/login/page.tsx`, `app/activate-account/page.tsx` |
+| 10 | Fredoka para títulos/logo/código; Nunito para el resto; sin Geist ni Arial | ✅ Pass | `h1 Fredoka`, `code Fredoka`, `email Nunito`, 0 elementos Geist/Arial — computed styles |
+| 11 | `npx eslint app`, `npx tsc --noEmit`, `npm run build` sin errores | ✅ Pass | eslint EXIT 0; tsc EXIT 0; `next build` EXIT 0 |
+| 12 | Sin errores ni warnings en consola del navegador | ✅ Pass | `browser_console_messages` warning → 0 mensajes en `/login` y `/activate-account` |
+| 13 | Comparación visual 1440×900 vs HTML de referencia sin diferencias relevantes | ✅ Pass | `appLogin`/`refLogin` y `appAct`/`refAct` coinciden en tipografía, colores, radios, degradados y sombras — `.playwrights-mcp/verif-login-1440.png`, `verif-activate-account-1440.png` |
