@@ -1,3 +1,7 @@
+import Link from "next/link";
+
+import { loginFixture } from "../_data/auth";
+
 export default function LoginPage() {
   return (
     <div className="grid min-h-screen grid-cols-[1.05fr_1fr] bg-auth-bg">
@@ -44,7 +48,66 @@ export default function LoginPage() {
       </div>
 
       <div className="flex items-center justify-center p-10">
-        <div className="w-full max-w-[392px]" />
+        <div className="w-full max-w-[392px]">
+          <h2 className="mb-[6px] font-display text-[30px] font-semibold text-ink">
+            Iniciar sesión
+          </h2>
+          <p className="mb-7 text-[15px] text-muted">
+            Ingresá para ver el día de hoy.
+          </p>
+
+          <label
+            htmlFor="login-email"
+            className="mb-2 block text-[12px] font-bold tracking-[0.7px] text-muted"
+          >
+            EMAIL
+          </label>
+          <input
+            id="login-email"
+            type="email"
+            defaultValue={loginFixture.email}
+            className="mb-[18px] w-full rounded-[14px] border-[1.5px] border-field-border bg-white px-4 py-[14px] text-[15px] text-ink placeholder:text-field-placeholder focus:outline-none"
+          />
+
+          <label
+            htmlFor="login-password"
+            className="mb-2 block text-[12px] font-bold tracking-[0.7px] text-muted"
+          >
+            CONTRASEÑA
+          </label>
+          <input
+            id="login-password"
+            type="password"
+            placeholder="••••••••"
+            className="mb-[10px] w-full rounded-[14px] border-[1.5px] border-field-border bg-white px-4 py-[14px] text-[15px] text-ink placeholder:text-field-placeholder focus:outline-none"
+          />
+
+          <div className="mb-5 text-right">
+            <span
+              aria-disabled="true"
+              className="text-[13.5px] font-bold text-brand-strong"
+            >
+              ¿Olvidaste tu contraseña?
+            </span>
+          </div>
+
+          <Link
+            href="/"
+            className="block w-full rounded-[15px] bg-linear-[180deg,#F4977E,#EE8164] px-[15px] py-[15px] text-center text-[16px] font-extrabold text-white shadow-[0_10px_22px_-8px_rgba(238,129,100,0.7)]"
+          >
+            Iniciar sesión
+          </Link>
+
+          <p className="mt-6 text-center text-[14.5px] text-muted">
+            ¿Te invitó la guardería?{" "}
+            <Link
+              href="/activate-account"
+              className="font-extrabold text-brand-strong"
+            >
+              Activá tu cuenta
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
