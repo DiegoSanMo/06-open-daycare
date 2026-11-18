@@ -1,6 +1,6 @@
 # SPEC 04 — Modal para agregar niño
 
-> **Status:** Approved  
+> **Status:** Implemented  
 > **Depends on:** SPEC 02  
 > **Date:** 2026-11-18  
 > **Objective:** Agregar un modal accesible que se abre desde el botón "Agregar niño" de `/kids`, con validación de campos obligatorios y máscaras de ayuda, sin persistencia de datos.
@@ -82,20 +82,20 @@ Valores tomados de `references/pantallas/agregar-nino.dc.html`, alineados con lo
 
 ## Acceptance criteria
 
-- [ ] El botón "Agregar niño" de `/kids` es un `<button>` que abre el modal al hacer clic y mantiene texto, degradado, sombra e icono del prototipo.
-- [ ] El modal no está en el DOM inicial de `/kids`; aparece solo tras el clic.
-- [ ] El modal muestra cabecera "Cancelar" / "Agregar niño" / "Guardar" y los labels/placeholders literales de `agregar-nino.dc.html`.
-- [ ] Nombre, fecha de nacimiento y sala son obligatorios; alergias y notas médicas son opcionales.
-- [ ] La sala es un selector con exactamente `Soles`, `Luna`, `Estrellas`, con `Soles` preseleccionado.
-- [ ] Escribir `01022020` en fecha muestra `01/02/2020`; `31/02/2020` se marca inválido con mensaje inline.
-- [ ] Enviar con campos obligatorios vacíos muestra errores inline, marca `aria-invalid="true"` y no cierra el modal.
-- [ ] Enviar con campos obligatorios válidos cierra el modal sin agregar niño al listado ni navegar.
-- [ ] "Cancelar", clic en el overlay y `Escape` cierran el modal sin guardar.
-- [ ] El modal tiene `role="dialog"`, `aria-modal="true"` y `aria-labelledby`; el foco entra al primer campo y vuelve al botón al cerrar.
-- [ ] Tabular dentro del modal no mueve el foco a elementos detrás del overlay.
-- [ ] El scroll del fondo se bloquea mientras el modal está abierto y se restaura al cerrarlo.
-- [ ] Comparación visual a 1440×900 contra `agregar-nino.dc.html` sin diferencias relevantes en colores, radios, tipografías ni espaciados.
-- [ ] `npx eslint app`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
+- [x] El botón "Agregar niño" de `/kids` es un `<button>` que abre el modal al hacer clic y mantiene texto, degradado, sombra e icono del prototipo. — Evidencia: `tagName: BUTTON`, gradiente `rgb(244,151,126)→rgb(238,129,100)`, sombra `rgba(238,129,100,0.7)` e icono en `app/kids/page.tsx` y `app/_components/AddKidButton.tsx`
+- [x] El modal no está en el DOM inicial de `/kids`; aparece solo tras el clic. — Evidencia: `browser_evaluate` `dialogCount: 0` al cargar `/kids`
+- [x] El modal muestra cabecera "Cancelar" / "Agregar niño" / "Guardar" y los labels/placeholders literales de `agregar-nino.dc.html`. — Evidencia: `browser_evaluate` header `[Cancelar, Agregar niño, Guardar]`, 5 labels y placeholders del prototipo verificados en DOM
+- [x] Nombre, fecha de nacimiento y sala son obligatorios; alergias y notas médicas son opcionales. — Evidencia: `browser_evaluate` envío vacío marca nombre y fecha; `allergies` y `medicalNotes` no se validan
+- [x] La sala es un selector con exactamente `Soles`, `Luna`, `Estrellas`, con `Soles` preseleccionado. — Evidencia: `browser_evaluate` options `[Soles, Luna, Estrellas]` y `value: Soles`
+- [x] Escribir `01022020` en fecha muestra `01/02/2020`; `31/02/2020` se marca inválido con mensaje inline. — Evidencia: `browser_evaluate` `01022020→01/02/2020`; `31/02/2020` inválido con mensaje "La fecha no es válida. Usá dd/mm/aaaa."
+- [x] Enviar con campos obligatorios vacíos muestra errores inline, marca `aria-invalid="true"` y no cierra el modal. — Evidencia: `browser_evaluate` 2 errores (nombre, fecha), `aria-invalid="true"`, borde `rgb(217,88,60)`, modal permanece abierto
+- [x] Enviar con campos obligatorios válidos cierra el modal sin agregar niño al listado ni navegar. — Evidencia: `browser_evaluate` `dialogCount: 0`, 8 kidCards, `location.pathname /kids`
+- [x] "Cancelar", clic en el overlay y `Escape` cierran el modal sin guardar. — Evidencia: `browser_evaluate` los tres cierran, `dialogCount: 0`, foco retorna a "Agregar niño", `body.style.overflow` restaurado
+- [x] El modal tiene `role="dialog"`, `aria-modal="true"` y `aria-labelledby`; el foco entra al primer campo y vuelve al botón al cerrar. — Evidencia: `browser_evaluate` atributos presentes, `activeElementId: kid-name` al abrir, `activeText: Agregar niño` al cerrar
+- [x] Tabular dentro del modal no mueve el foco a elementos detrás del overlay. — Evidencia: `browser_press_key` Tab×14 y `Shift+Tab` desde Cancelar, foco siempre dentro del `dialog`
+- [x] El scroll del fondo se bloquea mientras el modal está abierto y se restaura al cerrarlo. — Evidencia: `browser_evaluate` `body.style.overflow` `hidden` al abrir → `""` al cerrar
+- [x] Comparación visual a 1440×900 contra `agregar-nino.dc.html` sin diferencias relevantes en colores, radios, tipografías ni espaciados. — Evidencia: `.playwrights-mcp/spec04-modal-app.png` vs `spec04-modal-ref.png`; computed styles iguales (tarjeta #FBF4EC, borde #ECE0D0, radio 24 px, sombra, labels #94887B 12 px, inputs #EADFD0 14 px)
+- [x] `npx eslint app`, `npx tsc --noEmit` y `npm run build` terminan sin errores. — Evidencia: `eslint` EXIT 0, `tsc --noEmit` EXIT 0, `next build` EXIT 0, 16 páginas estáticas
 
 ## Decisions
 
@@ -126,3 +126,25 @@ Valores tomados de `references/pantallas/agregar-nino.dc.html`, alineados con lo
 - Responsive, fotos, archivos ni tests automatizados nuevos.
 
 Cada uno de esos puntos, si se aborda, irá en su propio spec.
+
+## Verification
+
+> **Date:** 2026-11-18 · **Verified by:** spec-impl (implementación y verificación ejecutadas por el agente spec-impl)
+> **Result:** 14/14 criteria passed
+
+| # | Criterion | Result | Evidence |
+| --- | --- | --- | --- |
+| 1 | Botón `<button>` abre el modal con estilos del prototipo | ✅ Pass | `tagName: BUTTON`, gradiente `#F4977E→#EE8164`, sombra, icono; `app/kids/page.tsx`, `AddKidButton.tsx` |
+| 2 | Modal ausente del DOM inicial | ✅ Pass | `dialogCount: 0` al cargar `/kids` |
+| 3 | Cabecera y placeholders literales del prototipo | ✅ Pass | `role="dialog"`, título "Agregar niño", placeholders verificados en DOM |
+| 4 | 3 obligatorios + 2 opcionales | ✅ Pass | envío vacío marca nombre y fecha; opcionales sin validar |
+| 5 | Selector Soles/Luna/Estrellas, default Soles | ✅ Pass | options y `value` verificados en DOM |
+| 6 | Autoformato y validación real de fecha | ✅ Pass | `01022020→01/02/2020`; `31/02/2020` inválido con mensaje |
+| 7 | Errores inline y `aria-invalid` al enviar vacío | ✅ Pass | 2 errores, borde coral, modal permanece |
+| 8 | Envío válido cierra sin agregar ni navegar | ✅ Pass | cierra, 8 tarjetas, pathname `/kids` |
+| 9 | Cancelar/overlay/Escape cierran sin guardar | ✅ Pass | los tres probados; foco y scroll restaurados |
+| 10 | `role="dialog"`, `aria-modal`, `aria-labelledby`, foco | ✅ Pass | atributos presentes; foco inicial y de retorno al botón |
+| 11 | Focus trap con Tab/Shift+Tab | ✅ Pass | foco nunca sale del `dialog` |
+| 12 | Scroll bloqueado y restaurado | ✅ Pass | `overflow: hidden` → `""` |
+| 13 | Comparación visual 1440×900 | ✅ Pass | computed styles vs `agregar-nino.dc.html`; capturas `.playwrights-mcp/spec04-modal-*.png` |
+| 14 | lint/types/build sin errores | ✅ Pass | eslint/tsc/build EXIT 0 |
