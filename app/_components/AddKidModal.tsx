@@ -153,7 +153,8 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
 
   const focusRingClass =
     "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
-  const fieldClass = `w-full rounded-[14px] border-[1.5px] border-field-border bg-white px-4 py-[13px] text-[15px] text-ink placeholder:text-field-placeholder ${focusRingClass}`;
+  const fieldBaseClass =
+    "w-full rounded-[14px] border-[1.5px] bg-white px-4 py-[13px] text-[15px] text-ink placeholder:text-field-placeholder";
 
   return (
     <div
@@ -200,7 +201,7 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                   errors.name ? "kid-name-help kid-name-error" : "kid-name-help"
                 }
                 aria-invalid={errors.name ? true : undefined}
-                className={`${fieldClass} ${errors.name ? "border-brand" : ""}`}
+                className={`${fieldBaseClass} ${errors.name ? "border-brand" : "border-field-border"} ${focusRingClass}`}
                 id="kid-name"
                 onChange={(event) => updateValue("name", event.target.value)}
                 ref={nameInputRef}
@@ -224,7 +225,7 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                       : "kid-birth-date-help"
                   }
                   aria-invalid={errors.birthDate ? true : undefined}
-                  className={`${fieldClass} ${errors.birthDate ? "border-brand" : ""}`}
+                  className={`${fieldBaseClass} ${errors.birthDate ? "border-brand" : "border-field-border"} ${focusRingClass}`}
                   id="kid-birth-date"
                   inputMode="numeric"
                   maxLength={10}
@@ -253,7 +254,7 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                       errors.room ? "kid-room-help kid-room-error" : "kid-room-help"
                     }
                     aria-invalid={errors.room ? true : undefined}
-                    className={`${fieldClass} appearance-none pr-10 font-bold ${errors.room ? "border-brand" : ""}`}
+                    className={`${fieldBaseClass} ${errors.room ? "border-brand" : "border-field-border"} ${focusRingClass} appearance-none pr-10 font-bold`}
                     id="kid-room"
                     onChange={(event) =>
                       updateValue("room", event.target.value as RoomOption)
@@ -290,7 +291,7 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
               <FieldLabel htmlFor="kid-allergies">ALERGIAS (ETIQUETAS)</FieldLabel>
               <input
                 aria-describedby="kid-allergies-help"
-                className={fieldClass}
+                className={`${fieldBaseClass} border-field-border ${focusRingClass}`}
                 id="kid-allergies"
                 onChange={(event) => updateValue("allergies", event.target.value)}
                 placeholder="Ej. Maní, Lactosa"
@@ -306,7 +307,7 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
               <FieldLabel htmlFor="kid-medical-notes">NOTAS MÉDICAS</FieldLabel>
               <textarea
                 aria-describedby="kid-medical-notes-help"
-                className={`${fieldClass} min-h-[90px] resize-y leading-[1.5]`}
+                className={`${fieldBaseClass} border-field-border ${focusRingClass} min-h-[90px] resize-y leading-[1.5]`}
                 id="kid-medical-notes"
                 onChange={(event) =>
                   updateValue("medicalNotes", event.target.value)
