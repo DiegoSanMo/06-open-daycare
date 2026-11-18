@@ -87,21 +87,21 @@ Valores tomados de `references/pantallas/vincular-padre.dc.html`.
 
 ## Acceptance criteria
 
-- [ ] El CTA "Vincular otro padre" de `/kids/[id]` es un `<button type="button">` que abre el modal al hacer clic y conserva ícono `+`, círculo punteado, texto y color `#C5503A`.
-- [ ] El modal no está en el DOM inicial del perfil; aparece solo tras el clic.
-- [ ] La cabecera muestra "Vincular padre" y "a {kid.name}": "a Mateo Fernández" en `/kids/mateo-fernandez` y "a Sofía Méndez" en `/kids/sofia-mendez`.
-- [ ] El aviso dice "Le enviaremos un correo con un código para que active su cuenta. Solo verá el feed de {firstName}.", con el nombre de pila dinámico.
-- [ ] Los labels, placeholders y textos del formulario coinciden literalmente con `vincular-padre.dc.html`.
-- [ ] El parentesco ofrece exactamente `Mamá`, `Papá` y `Tutor/a`, arranca en `Mamá` y permite cambiar a las otras dos.
-- [ ] El bloque muestra `7K4P9` y "Vence en 7 días" de forma fija en cualquier perfil.
-- [ ] Enviar vacío marca nombre y email con error inline y `aria-invalid="true"`, y el modal permanece abierto.
-- [ ] Un email sin formato válido (ej. `correo`) muestra error; `correo@ejemplo.com` lo pasa.
-- [ ] Enviar válido cierra el modal sin navegar, sin agregar padres a `linkedParents` y sin cambiar el contador del perfil.
-- [ ] El botón X, el clic en el overlay y `Escape` cierran el modal; la X no navega a otra ruta.
-- [ ] El modal tiene `role="dialog"`, `aria-modal="true"` y `aria-labelledby`; el foco entra en el campo nombre y vuelve al botón al cerrar.
-- [ ] `Tab` y `Shift+Tab` no mueven el foco a elementos detrás del overlay; el scroll del fondo se bloquea y se restaura.
-- [ ] La comparación visual a 1440×900 contra `vincular-padre.dc.html` no muestra diferencias relevantes en colores, radios, tipografías ni espaciados.
-- [ ] `npx eslint app`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
+- [x] El CTA "Vincular otro padre" de `/kids/[id]` es un `<button type="button">` que abre el modal al hacer clic y conserva ícono `+`, círculo punteado, texto y color `#C5503A`. — Evidencia: `tagName: BUTTON`, `text-brand-strong` (`#C5503A`), círculo `border-dashed border-[#D8CBBA]`; `app/kids/[id]/page.tsx` y `app/_components/LinkParentButton.tsx`.
+- [x] El modal no está en el DOM inicial del perfil; aparece solo tras el clic. — Evidencia: `browser_evaluate` `dialogCount: 0` al cargar `/kids/mateo-fernandez`.
+- [x] La cabecera muestra "Vincular padre" y "a {kid.name}": "a Mateo Fernández" en `/kids/mateo-fernandez` y "a Sofía Méndez" en `/kids/sofia-mendez`. — Evidencia: `browser_evaluate` subtitle en ambos perfiles.
+- [x] El aviso dice "Le enviaremos un correo con un código para que active su cuenta. Solo verá el feed de {firstName}.", con el nombre de pila dinámico. — Evidencia: `browser_evaluate` notice "...feed de Mateo." en `/kids/mateo-fernandez` y "...feed de Sofía." en `/kids/sofia-mendez`.
+- [x] Los labels, placeholders y textos del formulario coinciden literalmente con `vincular-padre.dc.html`. — Evidencia: `innerText` del modal idéntico al prototipo ("NOMBRE DEL PADRE/MADRE", "EMAIL", "PARENTESCO", "CÓDIGO DE INVITACIÓN", "Enviar invitación", placeholders).
+- [x] El parentesco ofrece exactamente `Mamá`, `Papá` y `Tutor/a`, arranca en `Mamá` y permite cambiar a las otras dos. — Evidencia: `browser_evaluate` relations `["Mamá","Papá","Tutor/a"]`, `checkedRelation: "Mamá"` al abrir, cambio a "Papá" verificado en navegador.
+- [x] El bloque muestra `7K4P9` y "Vence en 7 días" de forma fija en cualquier perfil. — Evidencia: `browser_evaluate` code `"7K4P9"` y `expiry: true` en el modal.
+- [x] Enviar vacío marca nombre y email con error inline y `aria-invalid="true"`, y el modal permanece abierto. — Evidencia: `browser_evaluate` errors `["Ingresá el nombre del padre/madre.","Ingresá el email."]`, `invalid: ["link-parent-name","link-parent-email"]`, borde `rgb(217, 88, 60)`, `dialogCount: 1`.
+- [x] Un email sin formato válido (ej. `correo`) muestra error; `correo@ejemplo.com` lo pasa. — Evidencia: `browser_evaluate` error `"El email no es válido."` con `correo`; envío con `correo@ejemplo.com` y `Papá` cierra el modal (`dialogCount: 0`).
+- [x] Enviar válido cierra el modal sin navegar, sin agregar padres a `linkedParents` y sin cambiar el contador del perfil. — Evidencia: `browser_evaluate` `dialogCount: 0`, `pathname "/kids/mateo-fernandez"`, padres siguen siendo Lucía y Diego, foco vuelve a "Vincular otro padre".
+- [x] El botón X, el clic en el overlay y `Escape` cierran el modal; la X no navega a otra ruta. — Evidencia: `Escape` → `dialogCount: 0`, foco en "Vincular otro padre", `pathname` sin cambios; X → `dialogCount: 0`; overlay `mousedown` → `dialogCount: 0`.
+- [x] El modal tiene `role="dialog"`, `aria-modal="true"` y `aria-labelledby`; el foco entra en el campo nombre y vuelve al botón al cerrar. — Evidencia: `browser_evaluate` atributos presentes, `activeId: "link-parent-name"` al abrir, `activeText: "Vincular otro padre"` al cerrar.
+- [x] `Tab` y `Shift+Tab` no mueven el foco a elementos detrás del overlay; el scroll del fondo se bloquea y se restaura. — Evidencia: 10 × `Tab` y `Shift+Tab` con `inside: true` siempre; `body.style.overflow` `hidden` → `""`.
+- [x] La comparación visual a 1440×900 contra `vincular-padre.dc.html` no muestra diferencias relevantes en colores, radios, tipografías ni espaciados. — Evidencia: computed styles idénticos (tarjeta `#FBF4EC`/`#ECE0D0`/24 px/sombra, header `20px 26px`, Fredoka 18 px, inputs `#EADFD0`/14 px, pills, `7K4P9` Fredoka 34 px, CTA degradado); capturas `.playwright-mcp/spec05-modal-app.png` vs `spec05-modal-ref.png`; geometría idéntica (tarjeta 480×681 en 480,40; pills y=437; código y=501; CTA y=649).
+- [x] `npx eslint app`, `npx tsc --noEmit` y `npm run build` terminan sin errores. — Evidencia: eslint EXIT 0; tsc EXIT 0; `next build` EXIT 0, 16 páginas estáticas.
 
 ## Decisions
 
@@ -135,3 +135,26 @@ Valores tomados de `references/pantallas/vincular-padre.dc.html`.
 - Responsive, fotos, archivos ni tests automatizados nuevos.
 
 Cada uno de esos puntos, si se aborda, irá en su propio spec.
+
+## Verification
+
+> **Date:** 2026-11-18 · **Verified by:** spec-verifier (`opencode/nemotron-3.5-super-vl-free`)
+> **Result:** 15/15 criteria passed
+
+| # | Criterion | Result | Evidence |
+| --- | --- | --- | --- |
+| 1 | CTA `<button type="button">` abre el modal con ícono `+`, círculo punteado, texto y color `#C5503A` | ✅ Pass | `tagName: BUTTON`, `text-brand-strong` (#C5503A), `border-dashed` círculo; `app/kids/[id]/page.tsx`, `LinkParentButton.tsx` |
+| 2 | Modal ausente del DOM inicial | ✅ Pass | `dialogCount: 0` al cargar `/kids/mateo-fernandez` |
+| 3 | Cabecera dinámica "a {kid.name}" | ✅ Pass | "a Mateo Fernández" y "a Sofía Méndez" — Playwright `browser_evaluate` |
+| 4 | Aviso con nombre de pila dinámico | ✅ Pass | "...feed de Mateo." / "...feed de Sofía." — Playwright `browser_evaluate` |
+| 5 | Labels, placeholders y textos literales | ✅ Pass | `innerText` idéntico al prototipo |
+| 6 | Parentesco Mamá/Papá/Tutor/a, Mamá preseleccionada | ✅ Pass | `relations ["Mamá","Papá","Tutor/a"]`, `checkedRelation: "Mamá"` — Playwright |
+| 7 | Código fijo `7K4P9` y "Vence en 7 días" | ✅ Pass | `code: "7K4P9"`, `expiry: true` — Playwright `browser_evaluate` |
+| 8 | Envío vacío: 2 errores, `aria-invalid`, modal abierto | ✅ Pass | errores nombre+email, borde `rgb(217,88,60)`, `dialogCount: 1` — Playwright |
+| 9 | Email inválido vs válido | ✅ Pass | "El email no es válido." con `correo`; `correo@ejemplo.com` cierra — Playwright |
+| 10 | Envío válido cierra sin navegar ni modificar padres | ✅ Pass | `dialogCount: 0`, pathname sin cambios, padres iguales, foco devuelto — Playwright |
+| 11 | X / overlay / `Escape` cierran sin navegar | ✅ Pass | los tres probados; `dialogCount: 0`, URL sin cambios — Playwright |
+| 12 | `role="dialog"`, `aria-modal`, `aria-labelledby`, foco inicial y de retorno | ✅ Pass | atributos presentes, `activeId: "link-parent-name"` al abrir, `activeText: "Vincular otro padre"` al cerrar — Playwright |
+| 13 | Focus trap y scroll bloqueado/restaurado | ✅ Pass | 10 × `Tab`/`Shift+Tab` `inside: true`; `overflow: hidden` → `""` — Playwright |
+| 14 | Comparación visual 1440×900 vs `vincular-padre.dc.html` | ✅ Pass | computed styles iguales; geometría idéntica (tarjeta 480×681, pills y=437, código y=501, CTA y=649); `.playwright-mcp/spec05-modal-app.png` vs `spec05-modal-ref.png` |
+| 15 | `npx eslint app`, `npx tsc --noEmit`, `npm run build` sin errores | ✅ Pass | eslint EXIT 0; tsc EXIT 0; `next build` EXIT 0, 16 páginas estáticas |
