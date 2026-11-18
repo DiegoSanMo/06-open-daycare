@@ -1,12 +1,19 @@
 "use client";
 
-import { useCallback, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 
 import {
   newPostPlaceholder,
   postAudienceOptions,
   postTypeOptions,
   type NewPostFormValues,
+  type NewPostPhoto,
   type PostAudienceId,
   type PostTypeId,
 } from "@/app/_data/feed";
@@ -61,8 +68,12 @@ function emptyValues(): NewPostFormValues {
 export function NewPostModal({ open, onClose }: NewPostModalProps) {
   const [values, setValues] = useState<NewPostFormValues>(emptyValues);
   const [errors, setErrors] = useState<FormErrors>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoUrlsRef = useRef<string[]>([]);
 
   const handleClose = useCallback(() => {
+    photoUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    photoUrlsRef.current = [];
     setValues(emptyValues());
     setErrors({});
     onClose();
@@ -97,6 +108,33 @@ export function NewPostModal({ open, onClose }: NewPostModalProps) {
     value: NewPostFormValues[K],
   ) {
     setValues((current) => ({ ...current, [field]: value }));
+  }
+
+  function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
+
+    const photos: NewPostPhoto[] = files.map((file) => {
+      const url = URL.createObjectURL(file);
+      photoUrlsRef.current.push(url);
+      return { id: crypto.randomUUID(), url, name: file.name };
+    });
+    setValues((current) => ({
+      ...current,
+      photos: [...current.photos, ...photos],
+    }));
+    event.target.value = "";
+  }
+
+  function handleRemovePhoto(photo: NewPostPhoto) {
+    URL.revokeObjectURL(photo.url);
+    photoUrlsRef.current = photoUrlsRef.current.filter(
+      (url) => url !== photo.url,
+    );
+    setValues((current) => ({
+      ...current,
+      photos: current.photos.filter((item) => item.id !== photo.id),
+    }));
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -299,7 +337,65 @@ export function NewPostModal({ open, onClose }: NewPostModalProps) {
 
             <div>
               <span className={labelClass}>FOTOS</span>
-              <div className="flex gap-3" />
+              <div className="flex gap-3">
+                {values.photos.map((photo) => (
+                  <div className="relative" key={photo.id}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      alt={photo.name}
+                      className="h-24 w-24 rounded-[14px] border border-line bg-photo-bg object-cover"
+                      src={photo.url}
+                    />
+                    <button
+                      aria-label={`Quitar ${photo.name}`}
+                      className={`absolute -right-2 -top-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-ink text-white ${fieldFocusRingClass}`}
+                      onClick={() => handleRemovePhoto(photo)}
+                      type="button"
+                    >
+                      <svg
+                        aria-hidden="true"
+                        fill="none"
+                        height="12"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeWidth="2.4"
+                        viewBox="0 0 24 24"
+                        width="12"
+                      >
+                        <path d="M18 6 6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+
+                <input
+                  accept="image/*"
+                  className="sr-only"
+                  multiple
+                  onChange={handlePhotoChange}
+                  ref={fileInputRef}
+                  type="file"
+                />
+                <button
+                  className={`flex h-24 w-24 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-photo-line bg-photo-bg text-photo-label ${fieldFocusRingClass}`}
+                  onClick={() => fileInputRef.current?.click()}
+                  type="button"
+                >
+                  <svg
+                    aria-hidden="true"
+                    fill="none"
+                    height="22"
+                    stroke="#C5503A"
+                    strokeLinecap="round"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                    width="22"
+                  >
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  <span className="text-[12px]">Agregar</span>
+                </button>
+              </div>
             </div>
           </div>
         </form>
