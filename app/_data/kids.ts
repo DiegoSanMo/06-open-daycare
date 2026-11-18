@@ -250,3 +250,41 @@ export function getKidById(id: string): Kid | undefined {
 export function getKidsCount(): number {
   return kids.length;
 }
+
+export const roomOptions = ["Soles", "Luna", "Estrellas"] as const;
+
+export type RoomOption = (typeof roomOptions)[number];
+
+export type AddKidFormValues = {
+  name: string;
+  birthDate: string; // "dd/mm/aaaa"
+  room: RoomOption | ""; // "" = opción "Seleccione sala"
+  allergies: string; // CSV separado por comas
+  medicalNotes: string;
+};
+
+export function formatBirthDate(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+export function isValidBirthDate(value: string): boolean {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  if (!match) return false;
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+
+  if (month < 1 || month > 12 || day < 1 || day > 31) return false;
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
