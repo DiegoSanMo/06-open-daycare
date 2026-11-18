@@ -1,6 +1,6 @@
 # SPEC 06 — Modal para nueva publicación
 
-> **Status:** Approved  
+> **Status:** Implemented  
 > **Depends on:** SPEC 01  
 > **Date:** 2026-11-18  
 > **Objective:** Agregar un modal accesible que se abre desde el CTA "Nueva publicación" del sidebar y la caja de composición del feed, con selección de destinatarios, tipo, descripción y fotos locales, y publicación sin persistencia.
