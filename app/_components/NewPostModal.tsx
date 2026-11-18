@@ -2,6 +2,7 @@
 
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -68,8 +69,11 @@ function emptyValues(): NewPostFormValues {
 export function NewPostModal({ open, onClose }: NewPostModalProps) {
   const [values, setValues] = useState<NewPostFormValues>(emptyValues);
   const [errors, setErrors] = useState<FormErrors>({});
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const firstAudienceInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoUrlsRef = useRef<string[]>([]);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   const handleClose = useCallback(() => {
     photoUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
@@ -78,6 +82,47 @@ export function NewPostModal({ open, onClose }: NewPostModalProps) {
     setErrors({});
     onClose();
   }, [onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    firstAudienceInputRef.current?.focus();
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        handleClose();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocusedRef.current?.focus();
+    };
+  }, [open, handleClose]);
 
   if (!open) return null;
 
@@ -163,11 +208,16 @@ export function NewPostModal({ open, onClose }: NewPostModalProps) {
       }}
     >
       <div
+        aria-describedby="new-post-hint"
         aria-labelledby="new-post-title"
         aria-modal="true"
         className="max-h-[calc(100vh-80px)] w-full max-w-[580px] overflow-y-auto rounded-[24px] border border-line bg-auth-bg shadow-[0_20px_50px_-24px_rgba(63,54,46,0.35)]"
+        ref={dialogRef}
         role="dialog"
       >
+        <p className="sr-only" id="new-post-hint">
+          Elegí destinatarios, un tipo y una descripción para publicar.
+        </p>
         <form noValidate onSubmit={handleSubmit}>
           <div className="flex items-center justify-between border-b border-line px-[26px] py-5">
             <button
@@ -215,6 +265,11 @@ export function NewPostModal({ open, onClose }: NewPostModalProps) {
                         className="peer sr-only"
                         id={`new-post-audience-${option.id}`}
                         onChange={() => toggleAudience(option.id)}
+                        ref={
+                          option.id === postAudienceOptions[0].id
+                            ? firstAudienceInputRef
+                            : undefined
+                        }
                         type="checkbox"
                       />
                       <label
