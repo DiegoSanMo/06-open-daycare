@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 
 import {
   invitationFixture,
@@ -34,6 +40,9 @@ export function LinkParentModal({
 }: LinkParentModalProps) {
   const [values, setValues] = useState<LinkParentFormValues>(emptyValues);
   const [errors, setErrors] = useState<FormErrors>({});
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   const handleClose = useCallback(() => {
     setValues(emptyValues());
@@ -44,12 +53,42 @@ export function LinkParentModal({
   useEffect(() => {
     if (!open) return;
 
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    nameInputRef.current?.focus();
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") handleClose();
+      if (event.key === "Escape") {
+        handleClose();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocusedRef.current?.focus();
+    };
   }, [open, handleClose]);
 
   if (!open) return null;
@@ -84,6 +123,8 @@ export function LinkParentModal({
     "w-full rounded-[14px] border-[1.5px] bg-white px-4 py-[13px] text-[15px] text-ink placeholder:text-field-placeholder";
   const labelClass =
     "mb-2 block text-[12px] font-extrabold tracking-[0.7px] text-muted";
+  const focusRingClass =
+    "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
   return (
     <div
@@ -93,9 +134,11 @@ export function LinkParentModal({
       }}
     >
       <div
+        aria-describedby="link-parent-notice"
         aria-labelledby="link-parent-title"
         aria-modal="true"
         className="w-full max-w-[480px] overflow-hidden rounded-[24px] border border-line bg-auth-bg shadow-[0_20px_50px_-24px_rgba(63,54,46,0.35)]"
+        ref={dialogRef}
         role="dialog"
       >
         <div className="flex items-center justify-between border-b border-line px-[26px] py-5">
@@ -110,7 +153,7 @@ export function LinkParentModal({
           </div>
           <button
             aria-label="Cerrar"
-            className="flex h-[34px] w-[34px] flex-none cursor-pointer items-center justify-center rounded-[10px] bg-[#F0E6D8] text-[#94887B]"
+            className={`flex h-[34px] w-[34px] flex-none cursor-pointer items-center justify-center rounded-[10px] bg-[#F0E6D8] text-[#94887B] ${focusRingClass}`}
             onClick={handleClose}
             type="button"
           >
@@ -145,7 +188,7 @@ export function LinkParentModal({
               <circle cx="12" cy="12" r="10" />
               <path d="M12 16v-4M12 8h.01" />
             </svg>
-            <span className="text-[13.5px] leading-[1.45] text-[#3F5694]">
+            <span className="text-[13.5px] leading-[1.45] text-[#3F5694]" id="link-parent-notice">
               Le enviaremos un correo con un código para que active su cuenta.
               Solo verá el feed de {firstName}.
             </span>
@@ -158,10 +201,11 @@ export function LinkParentModal({
             <input
               aria-describedby={errors.parentName ? "link-parent-name-error" : undefined}
               aria-invalid={errors.parentName ? true : undefined}
-              className={`${fieldBaseClass} ${errors.parentName ? "border-brand" : "border-field-border"}`}
+              className={`${fieldBaseClass} ${errors.parentName ? "border-brand" : "border-field-border"} ${focusRingClass}`}
               id="link-parent-name"
               onChange={(event) => updateValue("parentName", event.target.value)}
               placeholder="Ej. Diego Fernández"
+              ref={nameInputRef}
               type="text"
               value={values.parentName}
             />
@@ -183,7 +227,7 @@ export function LinkParentModal({
             <input
               aria-describedby={errors.email ? "link-parent-email-error" : undefined}
               aria-invalid={errors.email ? true : undefined}
-              className={`${fieldBaseClass} ${errors.email ? "border-brand" : "border-field-border"}`}
+              className={`${fieldBaseClass} ${errors.email ? "border-brand" : "border-field-border"} ${focusRingClass}`}
               id="link-parent-email"
               onChange={(event) => updateValue("email", event.target.value)}
               placeholder="correo@ejemplo.com"
@@ -243,7 +287,7 @@ export function LinkParentModal({
           </div>
 
           <button
-            className="flex w-full cursor-pointer items-center justify-center gap-[9px] rounded-[14px] bg-linear-[180deg,#F4977E,#EE8164] p-[14px] text-[15.5px] font-extrabold text-white shadow-[0_10px_22px_-8px_rgba(238,129,100,0.7)]"
+            className={`flex w-full cursor-pointer items-center justify-center gap-[9px] rounded-[14px] bg-linear-[180deg,#F4977E,#EE8164] p-[14px] text-[15.5px] font-extrabold text-white shadow-[0_10px_22px_-8px_rgba(238,129,100,0.7)] ${focusRingClass}`}
             type="submit"
           >
             <svg
