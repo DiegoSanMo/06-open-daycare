@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 
 import {
   AddKidFormValues,
@@ -65,6 +71,9 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 export function AddKidModal({ open, onClose }: AddKidModalProps) {
   const [values, setValues] = useState<AddKidFormValues>(emptyValues);
   const [errors, setErrors] = useState<FormErrors>({});
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   const handleClose = useCallback(() => {
     setValues(emptyValues());
@@ -75,12 +84,42 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
   useEffect(() => {
     if (!open) return;
 
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    nameInputRef.current?.focus();
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") handleClose();
+      if (event.key === "Escape") {
+        handleClose();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocusedRef.current?.focus();
+    };
   }, [open, handleClose]);
 
   if (!open) return null;
@@ -112,8 +151,9 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
     if (Object.keys(nextErrors).length === 0) handleClose();
   }
 
-  const fieldClass =
-    "w-full rounded-[14px] border-[1.5px] border-field-border bg-white px-4 py-[13px] text-[15px] text-ink placeholder:text-field-placeholder";
+  const focusRingClass =
+    "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
+  const fieldClass = `w-full rounded-[14px] border-[1.5px] border-field-border bg-white px-4 py-[13px] text-[15px] text-ink placeholder:text-field-placeholder ${focusRingClass}`;
 
   return (
     <div
@@ -126,12 +166,13 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
         aria-labelledby="add-kid-title"
         aria-modal="true"
         className="w-full max-w-[520px] overflow-hidden rounded-[24px] border border-line bg-auth-bg shadow-[0_20px_50px_-24px_rgba(63,54,46,0.35)]"
+        ref={dialogRef}
         role="dialog"
       >
         <form noValidate onSubmit={handleSubmit}>
           <div className="flex items-center justify-between border-b border-line px-[26px] py-5">
             <button
-              className="text-[15px] font-bold text-muted"
+              className={`text-[15px] font-bold text-muted ${focusRingClass}`}
               onClick={handleClose}
               type="button"
             >
@@ -144,7 +185,7 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
               Agregar niño
             </h2>
             <button
-              className="text-[15px] font-extrabold text-brand"
+              className={`text-[15px] font-extrabold text-brand ${focusRingClass}`}
               type="submit"
             >
               Guardar
@@ -162,6 +203,7 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                 className={`${fieldClass} ${errors.name ? "border-brand" : ""}`}
                 id="kid-name"
                 onChange={(event) => updateValue("name", event.target.value)}
+                ref={nameInputRef}
                 placeholder="Ej. Martina López"
                 type="text"
                 value={values.name}
