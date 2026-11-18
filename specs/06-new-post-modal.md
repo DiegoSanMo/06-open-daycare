@@ -158,3 +158,28 @@ Valores tomados de `references/pantallas/crear-publicacion.dc.html`, alineados c
 - Tests automatizados nuevos.
 
 Cada uno de esos puntos, si se aborda, irá en su propio spec.
+
+## Verification
+
+> **Date:** 2026-11-18 · **Verified by:** spec-verifier (`opencode/nemotron-3.5-super-vl-free`)
+> **Result:** 16/16 criteria passed
+
+| # | Criterion | Result | Evidence |
+| --- | --- | --- | --- |
+| 1 | Both CTAs are `<button type="button">` that open the modal, keeping text, gradient, shadow and icon | ✅ Playwright snapshot shows `button "Nueva publicación"` in sidebar and `button "C Compartí un momento…"` in feed with original classes | `app/_components/NewPostButton.tsx`, `app/_components/AppShell.tsx`, `app/page.tsx` |
+| 2 | Modal is not in the initial DOM of `/` or `/kids`; appears only after clicking | ✅ Playwright: `dialogs: 0` before click; dialog appears after clicking either CTA | `.playwrights-mcp/page-*.yml` |
+| 3 | Header shows "Cancelar" / "Nueva publicación" / "Publicar" with prototype typography and colors; Cancelar and Publicar are buttons that don't navigate | ✅ Playwright computed styles: title Fredoka 18px/600 `#3F362E`; Cancelar 15px/700 `#94887B`; Publicar 15px/800 `#D9583C`; both are `<button>` | `.playwright-mcp/proto-metrics.json`, `.playwright-mcp/app-metrics.json` |
+| 4 | Labels "PARA", "TIPO", "DESCRIPCIÓN", "FOTOS" and placeholder `Contá cómo le fue hoy…` match the prototype literally | ✅ Placeholder literal with ellipsis; color `rgb(182,169,155)` identical to prototype | `app/_components/NewPostModal.tsx` |
+| 5 | "PARA" offers exactly Mateo, Sofía and Benjamín with their avatars, plus "Toda la sala", and allows marking multiple children | ✅ Playwright: `[mateo:true, sofia:true]` after two clicks; avatars `#A9D9E8`/`#F4B8CC`/`#B9DEC4` | `.playwright-mcp/page-*.yml` |
+| 6 | "Toda la sala" is exclusive: marking it unchecks children, and marking a child unchecks "Toda la sala" | ✅ Playwright verified both directions | `.playwright-mcp/page-*.yml` |
+| 7 | "TIPO" offers the seven chips with prototype colors, starts unselected, only one active at a time | ✅ Playwright: `types: []` initial → `['logro']` after clicks; colors literal and ring `#3F362E` verified | `app/_components/NewPostModal.tsx` |
+| 8 | Description starts empty with literal placeholder and is required | ✅ `value: ""`; error shown when submitting empty | `app/_components/NewPostModal.tsx` |
+| 9 | Submitting without recipients, type or description shows inline errors, marks `aria-invalid` and doesn't close | ✅ Playwright: 3 `[role=alert]`; `aria-invalid="true"` on 2 fieldsets + textarea; modal stays open | `.playwright-mcp/page-*.yml` |
+| 10 | Submitting with everything valid closes without adding posts, without navigating, and without changing the 3 feed posts | ✅ Playwright: `dialog:false`, `url:/`, `posts:3`, focus returns to the opening button | `.playwright-mcp/page-*.yml` |
+| 11 | "FOTOS" starts with only the "Agregar" tile; selecting images creates 96×96 thumbnails with remove button and nothing is uploaded | ✅ Playwright: 2 images → 2 tiles 96×96 with `blob:` src; removing one leaves 1 tile | `.playwright-mcp/page-*.yml` |
+| 12 | "Cancelar", overlay click and `Escape` close without saving and return focus to the button that opened the modal | ✅ Playwright verified all three closures on `/` and `/kids` | `.playwright-mcp/page-*.yml` |
+| 13 | Modal has `role="dialog"`, `aria-modal="true"` and `aria-labelledby`; focus enters the first checkbox (Mateo); `Tab`/`Shift+Tab` never leaves the dialog | ✅ Playwright: focus initial `new-post-audience-mateo`; wrap between index 0 (Cancelar) and 15 (Agregar) without leaving | `.playwright-mcp/page-*.yml` |
+| 14 | Background scroll is blocked on open and restored on close; if content exceeds viewport, card scrolls with `max-h-[calc(100vh-80px)]` and header moves with it | ✅ Playwright: `overflow:hidden`→`""`; at 600px height `maxH:520px`, `scrollH:621`, header moves 41→−39 | `.playwright-mcp/page-*.yml` |
+| 15 | Visual comparison at 1440×900 against `crear-publicacion.dc.html` shows no relevant differences in colors, radii, typography or spacing | ✅ Captures in `.playwright-mcp/`; computed styles identical after fixing chips to `inline-flex` (card 580×623 px, TIPO row 78 px) | `.playwright-mcp/new-post-modal.png`, `.playwright-mcp/crear-publicacion-reference.png` |
+| 16 | `npx eslint app`, `npx tsc --noEmit` and `npm run build` finish without errors | ✅ All three commands completed cleanly | Build output |
+
