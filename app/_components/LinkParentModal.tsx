@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 import {
   invitationFixture,
@@ -14,6 +14,10 @@ type LinkParentModalProps = {
   onClose: () => void;
   kidName: string;
 };
+
+type FormErrors = Partial<Record<keyof LinkParentFormValues, string>>;
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function emptyValues(): LinkParentFormValues {
   return {
@@ -29,6 +33,24 @@ export function LinkParentModal({
   kidName,
 }: LinkParentModalProps) {
   const [values, setValues] = useState<LinkParentFormValues>(emptyValues);
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  const handleClose = useCallback(() => {
+    setValues(emptyValues());
+    setErrors({});
+    onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") handleClose();
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, handleClose]);
 
   if (!open) return null;
 
@@ -41,13 +63,35 @@ export function LinkParentModal({
     setValues((current) => ({ ...current, [field]: value }));
   }
 
-  const fieldClass =
-    "w-full rounded-[14px] border-[1.5px] border-field-border bg-white px-4 py-[13px] text-[15px] text-ink placeholder:text-field-placeholder";
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const nextErrors: FormErrors = {};
+    if (!values.parentName.trim()) {
+      nextErrors.parentName = "Ingresá el nombre del padre/madre.";
+    }
+    if (!values.email.trim()) {
+      nextErrors.email = "Ingresá el email.";
+    } else if (!emailPattern.test(values.email.trim())) {
+      nextErrors.email = "El email no es válido.";
+    }
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length === 0) handleClose();
+  }
+
+  const fieldBaseClass =
+    "w-full rounded-[14px] border-[1.5px] bg-white px-4 py-[13px] text-[15px] text-ink placeholder:text-field-placeholder";
   const labelClass =
     "mb-2 block text-[12px] font-extrabold tracking-[0.7px] text-muted";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[rgba(63,54,46,0.45)] px-6 py-10">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[rgba(63,54,46,0.45)] px-6 py-10"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) handleClose();
+      }}
+    >
       <div
         aria-labelledby="link-parent-title"
         aria-modal="true"
@@ -67,7 +111,7 @@ export function LinkParentModal({
           <button
             aria-label="Cerrar"
             className="flex h-[34px] w-[34px] flex-none cursor-pointer items-center justify-center rounded-[10px] bg-[#F0E6D8] text-[#94887B]"
-            onClick={onClose}
+            onClick={handleClose}
             type="button"
           >
             <svg
@@ -85,11 +129,7 @@ export function LinkParentModal({
           </button>
         </div>
 
-        <form
-          className="px-[26px] py-[22px]"
-          noValidate
-          onSubmit={(event) => event.preventDefault()}
-        >
+        <form className="px-[26px] py-[22px]" noValidate onSubmit={handleSubmit}>
           <div className="mb-5 flex gap-[11px] rounded-[14px] bg-[#E3ECFB] px-4 py-[13px]">
             <svg
               className="mt-px flex-none"
@@ -116,13 +156,24 @@ export function LinkParentModal({
               NOMBRE DEL PADRE/MADRE
             </label>
             <input
-              className={fieldClass}
+              aria-describedby={errors.parentName ? "link-parent-name-error" : undefined}
+              aria-invalid={errors.parentName ? true : undefined}
+              className={`${fieldBaseClass} ${errors.parentName ? "border-brand" : "border-field-border"}`}
               id="link-parent-name"
               onChange={(event) => updateValue("parentName", event.target.value)}
               placeholder="Ej. Diego Fernández"
               type="text"
               value={values.parentName}
             />
+            {errors.parentName ? (
+              <p
+                className="mt-1.5 text-[12px] font-semibold text-brand"
+                id="link-parent-name-error"
+                role="alert"
+              >
+                {errors.parentName}
+              </p>
+            ) : null}
           </div>
 
           <div className="mb-[18px]">
@@ -130,13 +181,24 @@ export function LinkParentModal({
               EMAIL
             </label>
             <input
-              className={fieldClass}
+              aria-describedby={errors.email ? "link-parent-email-error" : undefined}
+              aria-invalid={errors.email ? true : undefined}
+              className={`${fieldBaseClass} ${errors.email ? "border-brand" : "border-field-border"}`}
               id="link-parent-email"
               onChange={(event) => updateValue("email", event.target.value)}
               placeholder="correo@ejemplo.com"
               type="email"
               value={values.email}
             />
+            {errors.email ? (
+              <p
+                className="mt-1.5 text-[12px] font-semibold text-brand"
+                id="link-parent-email-error"
+                role="alert"
+              >
+                {errors.email}
+              </p>
+            ) : null}
           </div>
 
           <fieldset className="mb-5">
