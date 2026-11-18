@@ -40,9 +40,9 @@ const audienceChipClass =
 const audienceChipActiveClass = "border-ink bg-ink text-white";
 const audienceChipInactiveClass = "border-line bg-surface text-nav";
 const allRoomChipClass =
-  "cursor-pointer rounded-full border-[1.5px] px-4 py-[6px] text-[14px] font-bold";
+  "inline-flex cursor-pointer items-center rounded-full border-[1.5px] px-4 py-[6px] text-[14px] font-bold";
 const typeChipClass =
-  "cursor-pointer rounded-full px-4 py-2 text-[13.5px] font-extrabold";
+  "inline-flex cursor-pointer items-center rounded-full px-4 py-2 text-[13.5px] font-extrabold";
 const selectedTypeRingClass = "ring-2 ring-[#3F362E] ring-offset-2 ring-offset-auth-bg";
 const errorRingClass = "ring-2 ring-brand ring-offset-2 ring-offset-auth-bg";
 
