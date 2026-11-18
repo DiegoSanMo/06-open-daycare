@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 import {
   AddKidFormValues,
   formatBirthDate,
+  isValidBirthDate,
   roomOptions,
   RoomOption,
 } from "@/app/_data/kids";
@@ -13,6 +14,18 @@ type AddKidModalProps = {
   open: boolean;
   onClose: () => void;
 };
+
+type FormErrors = Partial<Record<keyof AddKidFormValues, string>>;
+
+function emptyValues(): AddKidFormValues {
+  return {
+    name: "",
+    birthDate: "",
+    room: roomOptions[0],
+    allergies: "",
+    medicalNotes: "",
+  };
+}
 
 function FieldLabel({
   htmlFor,
@@ -39,14 +52,36 @@ function FieldHelp({ id, children }: { id: string; children: string }) {
   );
 }
 
+function FieldError({ id, message }: { id: string; message?: string }) {
+  if (!message) return null;
+
+  return (
+    <p className="mt-1.5 text-[12px] font-semibold text-brand" id={id} role="alert">
+      {message}
+    </p>
+  );
+}
+
 export function AddKidModal({ open, onClose }: AddKidModalProps) {
-  const [values, setValues] = useState<AddKidFormValues>({
-    name: "",
-    birthDate: "",
-    room: roomOptions[0],
-    allergies: "",
-    medicalNotes: "",
-  });
+  const [values, setValues] = useState<AddKidFormValues>(emptyValues);
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  const handleClose = useCallback(() => {
+    setValues(emptyValues());
+    setErrors({});
+    onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") handleClose();
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, handleClose]);
 
   if (!open) return null;
 
@@ -57,22 +92,47 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
     setValues((current) => ({ ...current, [field]: value }));
   }
 
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const nextErrors: FormErrors = {};
+    if (!values.name.trim()) {
+      nextErrors.name = "Ingresá el nombre completo.";
+    }
+    if (!values.birthDate.trim()) {
+      nextErrors.birthDate = "Ingresá la fecha de nacimiento.";
+    } else if (!isValidBirthDate(values.birthDate)) {
+      nextErrors.birthDate = "La fecha no es válida. Usá dd/mm/aaaa.";
+    }
+    if (!values.room) {
+      nextErrors.room = "Elegí una sala.";
+    }
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length === 0) handleClose();
+  }
+
   const fieldClass =
     "w-full rounded-[14px] border-[1.5px] border-field-border bg-white px-4 py-[13px] text-[15px] text-ink placeholder:text-field-placeholder";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[rgba(63,54,46,0.45)] px-6 py-10">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[rgba(63,54,46,0.45)] px-6 py-10"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) handleClose();
+      }}
+    >
       <div
         aria-labelledby="add-kid-title"
         aria-modal="true"
         className="w-full max-w-[520px] overflow-hidden rounded-[24px] border border-line bg-auth-bg shadow-[0_20px_50px_-24px_rgba(63,54,46,0.35)]"
         role="dialog"
       >
-        <form noValidate onSubmit={(event) => event.preventDefault()}>
+        <form noValidate onSubmit={handleSubmit}>
           <div className="flex items-center justify-between border-b border-line px-[26px] py-5">
             <button
               className="text-[15px] font-bold text-muted"
-              onClick={onClose}
+              onClick={handleClose}
               type="button"
             >
               Cancelar
@@ -95,17 +155,19 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
             <div className="mb-[18px]">
               <FieldLabel htmlFor="kid-name">NOMBRE COMPLETO</FieldLabel>
               <input
-                aria-describedby="kid-name-help"
-                className={fieldClass}
+                aria-describedby={
+                  errors.name ? "kid-name-help kid-name-error" : "kid-name-help"
+                }
+                aria-invalid={errors.name ? true : undefined}
+                className={`${fieldClass} ${errors.name ? "border-brand" : ""}`}
                 id="kid-name"
                 onChange={(event) => updateValue("name", event.target.value)}
                 placeholder="Ej. Martina López"
                 type="text"
                 value={values.name}
               />
-              <FieldHelp id="kid-name-help">
-                Escribí nombre y apellido.
-              </FieldHelp>
+              <FieldHelp id="kid-name-help">Escribí nombre y apellido.</FieldHelp>
+              <FieldError id="kid-name-error" message={errors.name} />
             </div>
 
             <div className="mb-[18px] flex gap-[14px]">
@@ -114,8 +176,13 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                   FECHA DE NACIMIENTO
                 </FieldLabel>
                 <input
-                  aria-describedby="kid-birth-date-help"
-                  className={fieldClass}
+                  aria-describedby={
+                    errors.birthDate
+                      ? "kid-birth-date-help kid-birth-date-error"
+                      : "kid-birth-date-help"
+                  }
+                  aria-invalid={errors.birthDate ? true : undefined}
+                  className={`${fieldClass} ${errors.birthDate ? "border-brand" : ""}`}
                   id="kid-birth-date"
                   inputMode="numeric"
                   maxLength={10}
@@ -130,14 +197,21 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                 <FieldHelp id="kid-birth-date-help">
                   Completá con el formato dd/mm/aaaa.
                 </FieldHelp>
+                <FieldError
+                  id="kid-birth-date-error"
+                  message={errors.birthDate}
+                />
               </div>
 
               <div className="flex-1">
                 <FieldLabel htmlFor="kid-room">SALA</FieldLabel>
                 <div className="relative">
                   <select
-                    aria-describedby="kid-room-help"
-                    className={`${fieldClass} appearance-none pr-10 font-bold`}
+                    aria-describedby={
+                      errors.room ? "kid-room-help kid-room-error" : "kid-room-help"
+                    }
+                    aria-invalid={errors.room ? true : undefined}
+                    className={`${fieldClass} appearance-none pr-10 font-bold ${errors.room ? "border-brand" : ""}`}
                     id="kid-room"
                     onChange={(event) =>
                       updateValue("room", event.target.value as RoomOption)
@@ -166,6 +240,7 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                   </svg>
                 </div>
                 <FieldHelp id="kid-room-help">Elegí la sala del niño.</FieldHelp>
+                <FieldError id="kid-room-error" message={errors.room} />
               </div>
             </div>
 
