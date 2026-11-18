@@ -258,7 +258,7 @@ export type RoomOption = (typeof roomOptions)[number];
 export type AddKidFormValues = {
   name: string;
   birthDate: string; // "dd/mm/aaaa"
-  room: RoomOption;
+  room: RoomOption | ""; // "" = opción "Seleccione sala"
   allergies: string; // CSV separado por comas
   medicalNotes: string;
 };

@@ -27,7 +27,7 @@ function emptyValues(): AddKidFormValues {
   return {
     name: "",
     birthDate: "",
-    room: roomOptions[0],
+    room: "",
     allergies: "",
     medicalNotes: "",
   };
@@ -257,10 +257,11 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                     className={`${fieldBaseClass} ${errors.room ? "border-brand" : "border-field-border"} ${focusRingClass} appearance-none pr-10 font-bold`}
                     id="kid-room"
                     onChange={(event) =>
-                      updateValue("room", event.target.value as RoomOption)
+                      updateValue("room", event.target.value as RoomOption | "")
                     }
                     value={values.room}
                   >
+                    <option value="">Seleccione sala</option>
                     {roomOptions.map((room) => (
                       <option key={room} value={room}>
                         {room}
