@@ -49,3 +49,35 @@ export const posts: FeedPost[] = [
     comments: 0,
   },
 ];
+
+export const postAudienceOptions = [
+  { id: "mateo", label: "Mateo", initial: "M", avatarBg: "#A9D9E8", avatarFg: "#1F7A93" },
+  { id: "sofia", label: "Sofía", initial: "S", avatarBg: "#F4B8CC", avatarFg: "#C44A7A" },
+  { id: "benjamin", label: "Benjamín", initial: "B", avatarBg: "#B9DEC4", avatarFg: "#3E8B62" },
+] as const;
+
+export type PostAudienceId = (typeof postAudienceOptions)[number]["id"];
+
+export const postTypeOptions = [
+  { id: "comida", label: "Comida", bg: "#9A7B1E", fg: "#FFFFFF" },
+  { id: "siesta", label: "Siesta", bg: "#E7DCF6", fg: "#7B5FC0" },
+  { id: "actividad", label: "Actividad", bg: "#2E89A6", fg: "#FFFFFF" },
+  { id: "logro", label: "Logro", bg: "#CFEBD8", fg: "#3E9B6C" },
+  { id: "animo", label: "Ánimo", bg: "#F9D2DE", fg: "#C56486" },
+  { id: "foto", label: "Foto", bg: "#FBD8CC", fg: "#D9684A" },
+  { id: "anuncio", label: "Anuncio", bg: "#CCD8F4", fg: "#4E72C8" },
+] as const;
+
+export type PostTypeId = (typeof postTypeOptions)[number]["id"];
+
+export type NewPostPhoto = { id: string; url: string; name: string };
+
+export type NewPostFormValues = {
+  audienceIds: PostAudienceId[];
+  allRoom: boolean;
+  type: PostTypeId | "";
+  description: string;
+  photos: NewPostPhoto[];
+};
+
+export const newPostPlaceholder = "Contá cómo le fue hoy…";
