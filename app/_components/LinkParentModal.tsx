@@ -246,7 +246,9 @@ export function LinkParentModal({
           </div>
 
           <fieldset className="mb-5">
-            <legend className={labelClass}>PARENTESCO</legend>
+            <legend className="mb-[10px] block text-[12px] font-extrabold tracking-[0.7px] text-muted">
+              PARENTESCO
+            </legend>
             <div className="flex gap-[9px]">
               {parentRelationOptions.map((relation: ParentRelation) => (
                 <div className="flex-1" key={relation}>
