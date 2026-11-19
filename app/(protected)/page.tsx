@@ -1,7 +1,9 @@
-import { AppShell } from "./_components/AppShell";
-import { NewPostButton } from "./_components/NewPostButton";
-import { PostCard } from "./_components/PostCard";
-import { posts, teacher } from "./_data/feed";
+import { AppShell } from "../_components/AppShell";
+import { NewPostButton } from "../_components/NewPostButton";
+import { PostCard } from "../_components/PostCard";
+import { posts, teacher } from "../_data/feed";
+
+export const instant = false;
 
 const firstName = teacher.name.split(" ")[0];
 

@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { createClient } from "@/utils/supabase/server";
 
+export const instant = false;
+
 async function TodoList() {
   const supabase = await createClient();
   const { data: todos, error } = await supabase.from("todos").select();

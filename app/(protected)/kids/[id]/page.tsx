@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { AppShell } from "../../_components/AppShell";
-import { LinkParentButton } from "../../_components/LinkParentButton";
-import { getKidById, kids } from "../../_data/kids";
+import { AppShell } from "../../../_components/AppShell";
+import { LinkParentButton } from "../../../_components/LinkParentButton";
+import { getKidById, kids } from "../../../_data/kids";
+
+export const instant = false;
 
 function KidProfileFallback() {
   return (
