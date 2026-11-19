@@ -1,8 +1,10 @@
-import { AddKidButton } from "../_components/AddKidButton";
-import { AppShell } from "../_components/AppShell";
-import { KidCard } from "../_components/KidCard";
-import { kids } from "../_data/kids";
-import { teacher } from "../_data/teacher";
+import { AddKidButton } from "../../_components/AddKidButton";
+import { AppShell } from "../../_components/AppShell";
+import { KidCard } from "../../_components/KidCard";
+import { kids } from "../../_data/kids";
+import { teacher } from "../../_data/teacher";
+
+export const instant = false;
 
 export default function KidsPage() {
   return (
