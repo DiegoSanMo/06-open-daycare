@@ -1,8 +1,9 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { teacher } from "../_data/teacher";
 import { LogoutButton } from "./LogoutButton";
 import { NewPostButton } from "./NewPostButton";
+import { UserIdentity, UserIdentityFallback } from "./UserIdentity";
 
 type ActiveNav = "feed" | "kids" | "avisos" | "account" | null;
 
@@ -161,15 +162,9 @@ export function AppShell({ active, contentMaxWidth, children }: AppShellProps) {
 
         <div className="mt-2.5 border-t border-line pt-3.5">
           <div className="flex items-center gap-[11px] px-2 py-1.5">
-            <div className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-avatar-teacher font-display text-[16px] font-semibold text-white">
-              {teacher.initial}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[14px] font-extrabold text-ink">
-                {teacher.name}
-              </div>
-              <div className="text-[12px] text-muted-soft">{teacher.role}</div>
-            </div>
+            <Suspense fallback={<UserIdentityFallback />}>
+              <UserIdentity />
+            </Suspense>
             <LogoutButton />
           </div>
         </div>
