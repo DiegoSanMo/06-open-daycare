@@ -1,6 +1,6 @@
 # SPEC 07 — Tabla `daycares` y primera migración de Supabase
 
-> **Status:** Approved  
+> **Status:** Implemented  
 > **Depends on:** Ninguno  
 > **Date:** 2026-11-18  
 > **Objective:** Crear la tabla raíz `daycares` en Supabase mediante una migración versionada con Supabase CLI, con RLS habilitado y un registro inicial, sin conectar todavía la app.
