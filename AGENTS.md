@@ -36,12 +36,12 @@ Daycare app (`open-daycare`) built from the static prototypes in `references/`:
 - `references/pantallas/*.dc.html` — 15 screen prototypes plus `index.dc.html`, a catalog of the rest (login, staff feed, compose, child profiles, parent feed, notices, daily summary, account). Plain HTML with inline styles, rendered by `support.js`; open them directly in a browser.
 - `references/screenshots/*.png` — rendered captures of those screens.
 
-`app/` is still the stock create-next-app page, so building a screen means translating a prototype into `app/` components — do not import `references/` files or `support.js`, and do not copy their inline styles verbatim (the app uses Tailwind). The prototypes all load Fredoka + Nunito; the starter layout loads Geist instead.
+`app/` ya contiene pantallas implementadas (el feed en `app/page.tsx`, login, kids, activate-account y la demo `/todos`), traducidas de los prototipos a componentes con Tailwind — no importar archivos de `references/` ni `support.js`, y no copiar sus estilos inline literalmente. Los prototipos cargan Fredoka + Nunito; `app/layout.tsx` carga esas mismas fuentes vía `next/font/google`.
 
 ## Commands
 
 - `npm run dev` — dev server (Turbopack is the default in Next 16; no `--turbopack` flag).
-- `npm run lint` — bare `eslint` over the whole repo, including the generated `references/pantallas/support.js` (its header says "do not edit"), which has 2 pre-existing errors (`react/no-deprecated`, `no-assign-module-variable`). Lint only what you changed (`npx eslint app`). `next lint` was removed in Next 16.
+- `npm run lint` — bare `eslint` over the whole repo, including the generated `references/pantallas/support.js` (its header says "do not edit"), which has 2 pre-existing errors (`react/no-deprecated`, `no-assign-module-variable`). Lint only what you changed (ej. `npx eslint app proxy.ts utils`). `next lint` was removed in Next 16.
 - `npx tsc --noEmit` — typecheck. Depends on generated types in `.next/types`; if `LayoutProps`/`PageProps` are unresolved, run `npx next typegen` or start the dev server.
 - `npm run build` — production build.
 - No test suite, formatter, or CI workflows exist yet.
@@ -50,7 +50,7 @@ Daycare app (`open-daycare`) built from the static prototypes in `references/`:
 
 - `next.config.ts` enables `cacheComponents` + `partialPrefetching`. Uncached async data and `cookies()`/`headers()` reads must sit inside `<Suspense>`; use `'use cache'` + `cacheLife()` to cache. `export const runtime` is not allowed (Node only). See `node_modules/next/dist/docs/01-app/01-getting-started/08-caching.md`.
 - `params`, `searchParams`, `cookies()`, `headers()` are async-only. Route props come from generated globals (`PageProps<'/route'>`, `LayoutProps<'/'>`) — `app/layout.tsx` already does this.
-- `middleware.ts` is `proxy.ts` in v16 (Node runtime only).
+- `middleware.ts` es `proxy.ts` en v16 (Node runtime only). El proxy de este repo está en la raíz (`proxy.ts`) y delega en `utils/supabase/middleware.ts`: debe llamar `await supabase.auth.getClaims()` para refrescar el token y copiar al response los headers de caché que entrega `setAll` (`Cache-Control`, `Expires`, `Pragma`). No ejecutar código entre la creación del cliente y `getClaims()`.
 - CSS is wired through `turbopack.rules` with `@tailwindcss/turbopack`, not PostCSS. Keep the single `@import "tailwindcss";` entry in `app/globals.css`.
 - The two `BEGIN:nextjs-*` blocks above are rewritten by `next dev`; put project notes outside them.
 - `@/*` maps to the repo root (`@/app/...`), not `src/`. There is no `src/`.
@@ -72,8 +72,27 @@ El proyecto usa Supabase como backend (Auth + Postgres). **El esquema todavía n
 - `users.id` es FK a `auth.users(id)` (mismo UUID). Email y contraseña viven en `auth.users`: no duplicarlos. La fila de perfil se crea con un trigger `AFTER INSERT` en `auth.users` (`SECURITY DEFINER`) tomando `daycare_id`, `role` y `full_name` de `raw_user_meta_data`. Activar RLS.
 - Las tres tablas intermedias son el corazón del modelo: `parent_children` (quién es familia de quién), `post_children` (define el feed del padre) e `invitations` (onboarding).
 - Config local: `.env` está ignorado por git y hoy define `SUPERBASE_DB_PASSWORD` (`.env.template` está vacío). Verificar el nombre de la variable antes de usar CLI/SDK; parece un typo de `SUPABASE_DB_PASSWORD`. No commitear valores.
-- El cliente (`supabase-js`, `@supabase/ssr`) **todavía no está instalado** en `package.json`; instalar versiones fijadas y commitear el lockfile cuando se agregue.
+- `.env.local` (también ignorado por git) define `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Next lo carga automáticamente en dev/build; es la única fuente de credenciales para los clientes SSR. La publishable key es pública por diseño; nunca poner `service_role`/secret keys en variables `NEXT_PUBLIC_*`.
+- Cliente instalado con versiones fijadas en `package.json` y lockfile actualizado: `@supabase/supabase-js@2.119.2`, `@supabase/ssr@0.12.7`. Actualizar con `npm install --save-exact`, regenerar el lockfile y commitearlo junto con el cambio.
 - Supabase cambia seguido: antes de implementar, verificar changelog/docs (skill `supabase`) en vez de depender de datos de entrenamiento. Verificar siempre cada cambio con una query o advisor.
+
+### Cliente SSR (Next.js 16 + `@supabase/ssr`)
+
+Archivos ya creados; reutilizarlos en vez de crear clientes `createServerClient`/`createBrowserClient` directamente en cada pantalla:
+
+- `utils/supabase/server.ts` — `await createClient()` para Server Components, Server Actions y Route Handlers. Lee cookies con `await cookies()` y envuelve `setAll` en `try/catch` porque los Server Components no pueden escribir cookies.
+- `utils/supabase/client.ts` — `createClient()` para Client Components; `createBrowserClient` ya aplica singleton.
+- `utils/supabase/middleware.ts` — `createClient(request)` construye el response, refleja las cookies refrescadas en el request y en el response, copia los headers de caché de `setAll` y llama a `getClaims()`.
+- `proxy.ts` (raíz) — único proxy del proyecto; exporta `proxy`, delega en el helper anterior y define el `matcher` que excluye `_next/static`, `_next/image`, `favicon.ico` y archivos de imagen.
+
+Notas de implementación vigentes (verificadas contra docs de Supabase y Context7):
+
+- Usar `getClaims()` (no `getSession()`) en código de servidor para verificar/refrescar la sesión; `getUser()` solo si se necesita el registro fresco de Auth.
+- `getAll`/`setAll` en vez de los métodos `get`/`set`/`remove` (deprecados).
+- Las variables se leen con `process.env.NEXT_PUBLIC_SUPABASE_URL!` y `process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!`.
+- Bajo `cacheComponents: true`, una query async a Supabase debe vivir en un componente hijo dentro de `<Suspense>` (ver `app/todos/page.tsx`); no ponerla directo en el export default sin boundary.
+- `app/todos/page.tsx` es una demo de conexión: consulta `todos`, tabla que **no existe** en el esquema de referencia, así que muestra el error de PostgREST con `role="alert"`. No reemplazar `app/page.tsx` (feed) con este ejemplo. Si se quiere una demo con datos reales, usar `posts` o crear la tabla primero.
+- Estado verificado: `npx tsc --noEmit`, `npx eslint app proxy.ts utils`, `npm run build` y un `GET /todos` en dev (200 con error esperado de tabla inexistente) pasaron correctamente.
 
 ### Reglas críticas de Supabase / Postgres (resumen de las skills)
 
