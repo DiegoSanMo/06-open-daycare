@@ -108,3 +108,30 @@ Convenciones:
 - Responsive, diseño ni tests automatizados nuevos.
 
 Cada uno de esos puntos, si se aborda, irá en su propio spec.
+
+## Verification
+
+> **Date:** 2026-11-19 · **Verified by:** spec-verifier (`opencode/nemotron-3.5-super-vl-free`)
+> **Result:** 10/10 criteria passed
+
+| # | Criterion (parafraseado) | Result | Evidence |
+|---|---|---|---|
+| 1 | Existe `supabase/migrations/<timestamp>_create_daycares.sql`, creado con `supabase migration new create_daycares` | ✅ Pass | `supabase/migrations/20261119044157_create_daycares.sql` (tracked), CLI v3.2.0 |
+| 2 | Define `public.daycares` con exactamente `id uuid PK default gen_random_uuid()`, `name text not null`, `created_at timestamptz not null default now()` | ✅ Pass | Migración línea 3-5; `execute_sql` remoto: uuid/NO/gen_random_uuid(), text/NO/null, timestamp with time zone/NO/now() |
+| 3 | Ejecuta `alter table public.daycares enable row level security;` y no crea policy | ✅ Pass | Migración línea 7; `relrowsecurity=true` en `pg_class` remoto |
+| 4 | Inserta 1 fila id `a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d`, name `Guardería Sala Soles`, `on conflict (id) do nothing` | ✅ Pass | Migración línea 9-12; `execute_sql` remoto: count=1, has_seed=true, fila con id y nombre exactos |
+| 5 | `supabase db reset` aplica sin errores; query local confirma 3 columnas, RLS activo, 1 fila seed | ✅ Pass | `supabase db reset` (exit 0): "Applying migration 20261119044157_create_daycares.sql..."; columnas/RLS/fila confirmados vía `supabase db query` y REST con service_role (1 fila) |
+| 6 | `supabase db push --remote` aplica exactamente 1 migración al proyecto linkeado | ✅ Pass | `supabase db push --remote --yes` (exit 0): "Remote database is up to date", project ref `gksfjiunrwsklqebrmec`; versión 3.2.0 usa `--remote` (no `--linked`) |
+| 7 | `execute_sql` remoto confirma 3 columnas, `relrowsecurity=true`, 1 fila con nombre de la guardería | ✅ Pass | `execute_sql` información_schema: 3 columnas; `pg_class` relrowsecurity=true; `count(*)=1`, name=`Guardería Sala Soles` |
+| 8 | `get_advisors` no reporta hallazgos críticos derivados de esta tabla | ✅ Pass | `get_advisors` security: INFO `rls_enabled_no_policy` (es la decisión intencional del spec, sin policy aún); 2 WARN son `rls_auto_enable()` preexistente, no derivadas de esta tabla; performance y health vacíos. Sin hallazgos críticos (no hay level ERROR). |
+| 9 | No se agregaron dependencias npm, código en `app/` ni variables `NEXT_PUBLIC_*` | ✅ Pass | `package.json` sin cambios (solo next/react/tailwind); `app/` sin cambios; `grep NEXT_PUBLIC app` = 0 coincidencias |
+| 10 | No se commiteó `.env` ni aparece la DB password en migración, spec ni diff | ✅ Pass | `.env` ignorado por `.gitignore:34` (`*.env*`); git status limpio; diff solo `supabase/config.toml` + migración, sin credenciales |
+
+### Evidencia de comando y archivos
+- `supabase --version`: 3.2.0 (ya instalado).
+- `supabase db push --help`: confirma flag `--remote` para el target remoto (v3.2.0, sin legacy `--linked`).
+- `supabase init`: `supabase/config.toml` generado y trackeado sin modificar valores por defecto.
+- `supabase start` + `supabase db reset`: ambos exit 0; stack local en `127.0.0.1:54322`.
+- `npm run build`: exit 0. `npx tsc --noEmit`: sin errores. `npx eslint app`: exit 0.
+- Dev server y stack local detenidos al finalizar; nada left running.
+
