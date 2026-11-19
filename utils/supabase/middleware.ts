@@ -1,10 +1,13 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
+type PendingCookie = { name: string; value: string; options?: CookieOptions };
+
+const PUBLIC_PATHS = new Set(["/login", "/activate-account"]);
+
 export async function createClient(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  const pendingCookies: PendingCookie[] = [];
+  const pendingHeaders: Record<string, string> = {};
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,18 +19,10 @@ export async function createClient(request: NextRequest) {
         },
         setAll(cookiesToSet, headers) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-
-          // Rebuild the response so it carries the refreshed request cookies.
-          supabaseResponse = NextResponse.next({ request });
-
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
-          );
-
-          // Prevent caches/CDNs from storing a response that sets session cookies.
-          Object.entries(headers).forEach(([key, value]) =>
-            supabaseResponse.headers.set(key, value),
-          );
+          pendingCookies.push(...cookiesToSet);
+          Object.entries(headers).forEach(([key, value]) => {
+            pendingHeaders[key] = value;
+          });
         },
       },
     },
@@ -35,7 +30,28 @@ export async function createClient(request: NextRequest) {
 
   // Verify and refresh the token. Nothing should run between client creation
   // and this call, otherwise sessions can be dropped unexpectedly.
-  await supabase.auth.getClaims();
+  const { data: claimsData } = await supabase.auth.getClaims();
 
-  return supabaseResponse;
+  const isPublicPath = PUBLIC_PATHS.has(request.nextUrl.pathname);
+  const isAuthenticated = Boolean(claimsData?.claims);
+
+  let response: NextResponse;
+  if (!isAuthenticated && !isPublicPath) {
+    response = NextResponse.redirect(new URL("/login", request.url));
+  } else if (isAuthenticated && isPublicPath) {
+    response = NextResponse.redirect(new URL("/", request.url));
+  } else {
+    response = NextResponse.next({ request });
+  }
+
+  // A redirect must carry the refreshed session cookies and the no-cache
+  // headers, otherwise the refresh is discarded on navigation.
+  pendingCookies.forEach(({ name, value, options }) =>
+    response.cookies.set(name, value, options),
+  );
+  Object.entries(pendingHeaders).forEach(([key, value]) =>
+    response.headers.set(key, value),
+  );
+
+  return response;
 }
