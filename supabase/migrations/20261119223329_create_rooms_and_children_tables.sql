@@ -1,6 +1,5 @@
--- Rooms and children: schema base.
--- The updated_at trigger, RLS policies and seed data are added in the
--- following steps of SPEC 10.
+-- SPEC 10: rooms and children for the kids screen.
+-- RLS policies and seed data are added in the following steps.
 
 create type public.child_status as enum ('active', 'archived');
 
@@ -31,3 +30,20 @@ create index children_status_idx on public.children (status);
 
 alter table public.rooms enable row level security;
 alter table public.children enable row level security;
+
+-- Keeps updated_at in sync on every child update.
+create function private.set_children_updated_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create trigger children_set_updated_at
+before update on public.children
+for each row
+execute function private.set_children_updated_at();
