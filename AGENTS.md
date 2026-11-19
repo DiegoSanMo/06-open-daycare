@@ -59,6 +59,8 @@ Daycare app (`open-daycare`) built from the static prototypes in `references/`:
 
 This repo ships repo-local skills (`.agents/skills/`, pinned in `skills-lock.json`): `/spec` designs a spec at `specs/NN-slug.md`, `/spec-impl` implements only specs marked `Approved` on branch `spec-NN-slug`. `specs/.spec-config.yml` controls branch creation and per-step commits. Check the spec state before implementing.
 
+**Ubicación de specs:** todo archivo de especificación relacionado con la base de datos (tablas, columnas, migraciones, RLS, índices, triggers, funciones, seeds, Supabase CLI/MCP, esquema) debe crearse en `specs/database/NN-slug.md`, nunca en la raíz de `specs/`. Los specs de UI, features y otros temas no relacionados con la base de datos van en `specs/NN-slug.md`. La numeración `NN` es global y consecutiva en todo el repo (por ejemplo, `specs/01-home-feed.md`, `specs/database/07-create-daycares-table.md`). Antes de crear un spec, revisar ambos directorios para no repetir número ni tema.
+
 ## Supabase
 
 El proyecto usa Supabase como backend (Auth + Postgres). **El esquema todavía no está implementado en la base de datos**: hoy existe solo como referencia.
@@ -100,7 +102,7 @@ Instaladas en `.agents/skills/` y fijadas con hash en `skills-lock.json` (instal
 
 | Skill | Origen | Cómo se invoca | Para qué |
 | ----- | ------ | -------------- | -------- |
-| `spec` | `klerith/fernando-skills` | `/spec <feature>` (comando en `opencode.json`) | Diseña specs en `specs/NN-slug.md` |
+| `spec` | `klerith/fernando-skills` | `/spec <feature>` (comando en `opencode.json`) | Diseña specs en `specs/NN-slug.md`; si son de base de datos, en `specs/database/NN-slug.md` |
 | `spec-impl` | `klerith/fernando-skills` | `/spec-impl <feature>` (comando en `opencode.json`) | Implementa solo specs `Approved` en rama `spec-NN-slug` |
 | `supabase` | `supabase/agent-skills` | Cargar la skill (se dispara por su `description`; no tiene slash command) | Cualquier tarea de Supabase: Auth, DB, Storage, Realtime, Edge Functions, CLI, MCP, logs, RLS |
 | `supabase-postgres-best-practices` | `supabase/agent-skills` | Cargar la skill (se dispara por su `description`; no tiene slash command) | Antes de escribir/cambiar SQL, esquemas, migraciones, RLS, índices, triggers o funciones |
