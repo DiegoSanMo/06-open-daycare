@@ -23,3 +23,48 @@ create table public.users (
 create index users_daycare_id_idx on public.users (daycare_id);
 
 alter table public.users enable row level security;
+
+-- Keeps updated_at in sync on every profile update.
+create function private.set_users_updated_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create trigger users_set_updated_at
+before update on public.users
+for each row
+execute function private.set_users_updated_at();
+
+-- Provisions a profile after Supabase Auth creates a user.
+-- role, daycare_id and full_name are read from app_metadata (raw_app_meta_data),
+-- which is not user-editable, unlike raw_user_meta_data. This deviates from the
+-- schema reference note and follows the repo security rule.
+create function private.handle_auth_user_created()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.users (id, daycare_id, role, full_name, status)
+  values (
+    new.id,
+    (new.raw_app_meta_data ->> 'daycare_id')::uuid,
+    (new.raw_app_meta_data ->> 'role')::public.user_role,
+    new.raw_app_meta_data ->> 'full_name',
+    'active'::public.user_status
+  );
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+after insert on auth.users
+for each row
+execute function private.handle_auth_user_created();
