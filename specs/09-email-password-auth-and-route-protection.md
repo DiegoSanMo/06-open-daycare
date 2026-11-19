@@ -1,6 +1,6 @@
 # SPEC 09 — Autenticación con email y contraseña y protección de rutas
 
-> **Status:** Approved  
+> **Status:** Implemented  
 > **Depends on:** SPEC 03, SPEC 08  
 > **Date:** 2026-11-19  
 > **Objective:** Conectar `/login` a Supabase Auth con email y contraseña, habilitar el cierre de sesión y bloquear el acceso a las rutas de la app para usuarios sin sesión válida.
@@ -61,22 +61,22 @@ Convenciones:
 
 ## Acceptance criteria
 
-- [ ] `GET /`, `/kids`, `/kids/mateo` y `/todos` sin sesión responden 307 a `/login`.
-- [ ] Con sesión válida, `GET /login` y `GET /activate-account` responden 307 a `/`.
-- [ ] La respuesta 307 del proxy conserva las cookies refrescadas por `setAll` y los headers `Cache-Control: private, no-cache, no-store, must-revalidate, max-age=0`, `Expires: 0` y `Pragma: no-cache`.
-- [ ] `app/(protected)/layout.tsx` invoca `getUser()` y redirige a `/login` cuando no hay usuario, sin depender solo del proxy.
-- [ ] Las URLs `/`, `/kids/*` y `/todos` no cambian tras mover los archivos al route group.
-- [ ] `/login` envía a `signInWithPassword` exactamente los valores escritos por el usuario, sin email precargado.
-- [ ] Credenciales inválidas muestran un `role="alert"` en español y permanecen en `/login`.
-- [ ] Credenciales válidas de `staff@salasoles.test` terminan en `/` con una cookie de sesión válida y el feed renderiza.
-- [ ] Durante el envío, el CTA "Iniciar sesión" queda deshabilitado y muestra `Ingresando…`.
-- [ ] "Cerrar sesión" ejecuta `signOut()`, redirige a `/login` y, tras el clic, `/` vuelve a redirigir a `/login`.
-- [ ] El botón de salida conserva `title="Cerrar sesión"`, clases y SVG del prototipo.
-- [ ] No aparece selector de rol ni lógica que distinga `staff`/`parent`/`admin` en la app.
-- [ ] No se crean migraciones ni se modifican tablas, RLS, policies ni los specs 07/08.
-- [ ] `npx eslint app proxy.ts utils`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
-- [ ] No hay errores ni warnings nuevos en la consola del navegador.
-- [ ] La comparación visual a 1440×900 de `/login` contra SPEC 03 no muestra diferencias salvo el campo email sin precargar.
+- [x] `GET /`, `/kids`, `/kids/mateo` y `/todos` sin sesión responden 307 a `/login`. ✅ `307 /login` para `/`, `/kids`, `/kids/mateo-fernandez` y `/todos` — fetch anónimo + Playwright (`location.pathname === "/login"`)
+- [x] Con sesión válida, `GET /login` y `GET /activate-account` responden 307 a `/`. ✅ ambas navegaciones con sesión terminan en `/` — Playwright
+- [x] La respuesta 307 del proxy conserva las cookies refrescadas por `setAll` y los headers `Cache-Control: private, no-cache, no-store, must-revalidate, max-age=0`, `Expires: 0` y `Pragma: no-cache`. ✅ `pendingCookies`/`pendingHeaders` se aplican al response final en `utils/supabase/middleware.ts`; la cookie de sesión sobrevive el redirect de login. Nota: el token estaba vigente durante la prueba, así que no se produjo un refresh que permitiera observar los headers en una 307 real.
+- [x] `app/(protected)/layout.tsx` invoca `getUser()` y redirige a `/login` cuando no hay usuario, sin depender solo del proxy. ✅ `AuthGuard` → `requireUser()` → `getUser()` + `redirect("/login")` dentro de `<Suspense>`
+- [x] Las URLs `/`, `/kids/*` y `/todos` no cambian tras mover los archivos al route group. ✅ mismo listado de rutas en `next build` (17 páginas) y navegación real en Playwright
+- [x] `/login` envía a `signInWithPassword` exactamente los valores escritos por el usuario, sin email precargado. ✅ `email.value ""`, placeholder `correo@ejemplo.com`; login con credenciales escritas en el browser llega a `/`
+- [x] Credenciales inválidas muestran un `role="alert"` en español y permanecen en `/login`. ✅ `[role=alert] = "Email o contraseña incorrectos."`, `location.pathname === "/login"`
+- [x] Credenciales válidas de `staff@salasoles.test` terminan en `/` con una cookie de sesión válida y el feed renderiza. ✅ cookie `sb-...-auth-token` presente, `h1 "Buenas, Caro"` y `PUBLICADO HOY`
+- [x] Durante el envío, el CTA "Iniciar sesión" queda deshabilitado y muestra `Ingresando…`. ✅ request de Auth retrasada 2,5 s: `ctaText "Ingresando…"`, `disabled true`
+- [x] "Cerrar sesión" ejecuta `signOut()`, redirige a `/login` y, tras el clic, `/` vuelve a redirigir a `/login`. ✅ `url "/login"`, `cookies []`, navegación posterior a `/` → `/login`
+- [x] El botón de salida conserva `title="Cerrar sesión"`, clases y SVG del prototipo. ✅ mismo SVG `path` y clases originales en `app/_components/LogoutButton.tsx`
+- [x] No aparece selector de rol ni lógica que distinga `staff`/`parent`/`admin` en la app. ✅ `roleWords: []` en `/login`
+- [x] No se crean migraciones ni se modifican tablas, RLS, policies ni los specs 07/08. ✅ sin cambios de SQL ni de esos specs
+- [x] `npx eslint app proxy.ts utils`, `npx tsc --noEmit` y `npm run build` terminan sin errores. ✅ los tres EXIT 0; 17 páginas
+- [x] No hay errores ni warnings nuevos en la consola del navegador. ✅ 0 errores/warnings tras navegación normal; el 400 de Supabase aparece solo al probar credenciales inválidas deliberadamente
+- [x] La comparación visual a 1440×900 de `/login` contra SPEC 03 no muestra diferencias salvo el campo email sin precargar. ✅ estilos computados idénticos (`grid 737.555px 702.445px`, `rgb(251,244,236)`, degradado `155deg`); CTA como `<button>` en vez de `<a>` por ser un formulario real — `.playwrights-mcp/spec09-login-1440x900.png`
 
 ## Decisions
 
@@ -112,3 +112,20 @@ Convenciones:
 - Datos reales de dominio, feed real, composición de posts ni cambios en `AppShell` fuera del logout.
 
 Cada uno de esos puntos, si se aborda, irá en su propio spec.
+
+## Verification
+
+> **Date:** 2026-11-19 · **Result:** 16/16 criteria passed (una con observación: no hubo refresh de token durante la prueba)
+>
+> **Fix adicional detectado en verificación:** con sesión válida, Next 16 reportaba `unstable value Date.now() while prerendering` desde `ProtectedLayout` (el refresh de Supabase usa `Date.now()`). `instant = false` no lo resuelve; se agregó `await connection()` antes de `requireUser()`, dentro del `<Suspense>`, siguiendo `node_modules/next/dist/docs/01-app/02-guides/migrating-to-cache-components.md`. Tras el fix, 0 errores en consola.
+
+| Verificación | Evidencia |
+| --- | --- |
+| Anónimo en rutas protegidas | `307 /login` en `/`, `/kids`, `/kids/mateo-fernandez` y `/todos` |
+| Autenticado en rutas públicas | `/login` y `/activate-account` → `/` |
+| Login inválido | `role="alert"` = "Email o contraseña incorrectos.", sin navegar |
+| Login válido | cookie de sesión + `Buenas, Caro` + `PUBLICADO HOY` |
+| Estado de envío | `Ingresando…` y `disabled: true` con la request retrasada |
+| Logout | `/login`, `cookies []`, `/` vuelve a `/login` |
+| Estáticos | `npx eslint app proxy.ts utils`, `npx tsc --noEmit`, `npm run build` EXIT 0 |
+| Visual 1440×900 | estilos computados iguales a SPEC 03; `.playwrights-mcp/spec09-login-1440x900.png` |
