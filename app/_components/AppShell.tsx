@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { teacher } from "../_data/teacher";
+import { LogoutButton } from "./LogoutButton";
 import { NewPostButton } from "./NewPostButton";
 
 type ActiveNav = "feed" | "kids" | "avisos" | "account" | null;
@@ -169,24 +170,7 @@ export function AppShell({ active, contentMaxWidth, children }: AppShellProps) {
               </div>
               <div className="text-[12px] text-muted-soft">{teacher.role}</div>
             </div>
-            <a
-              aria-disabled="true"
-              title="Cerrar sesión"
-              className="flex h-8 w-8 flex-none items-center justify-center rounded-[10px] bg-app text-muted"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
-              </svg>
-            </a>
+            <LogoutButton />
           </div>
         </div>
       </aside>
