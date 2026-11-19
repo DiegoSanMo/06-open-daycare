@@ -74,19 +74,19 @@ Convenciones y notas de modelo:
 
 ## Acceptance criteria
 
-- [ ] Existe `supabase/migrations/<timestamp>_create_users_table.sql`, creado con `supabase migration new create_users_table`.
-- [ ] La migración crea los ENUMs `public.user_role` con valores `staff`, `parent`, `admin` y `public.user_status` con valores `pending`, `active`.
-- [ ] `public.users` existe con columnas, tipos, nulabilidad y defaults exactos de la referencia: `id uuid PK FK → auth.users(id) ON DELETE CASCADE`, `daycare_id uuid NOT NULL FK → public.daycares(id)`, `role user_role NOT NULL`, `status user_status NOT NULL default 'active'`, `full_name text NOT NULL`, `avatar_url text NULL`, `notify_on_post boolean NOT NULL default true`, `daily_summary_enabled boolean NOT NULL default true`, `created_at timestamptz NOT NULL default now()`, `updated_at timestamptz NOT NULL default now()`.
-- [ ] `updated_at` de `public.users` se actualiza automáticamente en cada `UPDATE` mediante un trigger definido en la migración.
-- [ ] Existe un trigger `AFTER INSERT` en `auth.users` que crea la fila correspondiente en `public.users` leyendo `daycare_id`, `role` y `full_name` desde `raw_app_meta_data` (app metadata), y la función del trigger es `SECURITY DEFINER` en un schema no expuesto con `search_path = ''`.
-- [ ] `alter table public.users enable row level security` está aplicado y existe una policy `SELECT` para `to authenticated` que permite leer solo la propia fila (`id = auth.uid()`).
-- [ ] `public.daycares` tiene una policy `SELECT` para `to authenticated` que permite leer únicamente la guardería asociada al perfil del usuario autenticado (resuelta vía `public.users`), reemplazando el estado sin policies de SPEC 07.
-- [ ] `anon` y `authenticated` no tienen privilegios de tabla sobre `public.users`; `public.users` no se expone a la Data API en este spec. Los grants sobre `public.daycares` quedan limitados al mínimo requerido por la policy de lectura autenticada.
-- [ ] Existe un usuario staff de prueba real en `auth.users` con email `staff@salasoles.test` y su fila en `public.users` con `daycare_id = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d'`, `role = 'staff'` y `status = 'active'`, creada por el trigger.
-- [ ] La contraseña del staff de prueba no aparece en la migración, en el spec, en el diff ni en archivos commiteados.
-- [ ] `supabase db reset` aplica la migración sin errores y `supabase db push --remote` la aplica al proyecto linkeado.
-- [ ] La verificación con `execute_sql` confirma enums, estructura, RLS, policies, triggers y perfil staff en el entorno objetivo; `get_advisors` no reporta hallazgos críticos derivados de esta migración.
-- [ ] No se agregaron dependencias npm, código en `app/`, variables `NEXT_PUBLIC_*` ni cambios en specs 01–07.
+- [x] Existe `supabase/migrations/<timestamp>_create_users_table.sql`, creado con `supabase migration new create_users_table`. ✅ Pass — `supabase/migrations/20261119165356_create_users_table.sql`, creado con `supabase migration new create_users_table`; aplicado en local y remoto (`supabase db reset` / `db push --remote --yes`).
+- [x] La migración crea los ENUMs `public.user_role` con valores `staff`, `parent`, `admin` y `public.user_status` con valores `pending`, `active`. ✅ Pass — `pg_type`/`pg_enum`: `user_role={staff,parent,admin}`, `user_status={pending,active}` (local y remoto).
+- [x] `public.users` existe con columnas, tipos, nulabilidad y defaults exactos de la referencia: `id uuid PK FK → auth.users(id) ON DELETE CASCADE`, `daycare_id uuid NOT NULL FK → public.daycares(id)`, `role user_role NOT NULL`, `status user_status NOT NULL default 'active'`, `full_name text NOT NULL`, `avatar_url text NULL`, `notify_on_post boolean NOT NULL default true`, `daily_summary_enabled boolean NOT NULL default true`, `created_at timestamptz NOT NULL default now()`, `updated_at timestamptz NOT NULL default now()`. ✅ Pass — `pg_attribute`/`information_schema` local y remoto: 10 columnas, tipos, `not_null`, defaults y `relrowsecurity=true` coinciden con la referencia.
+- [x] `updated_at` de `public.users` se actualiza automáticamente en cada `UPDATE` mediante un trigger definido en la migración. ✅ Pass — trigger `BEFORE UPDATE` `users_set_updated_at` → `private.set_users_updated_at`; prueba de humo: `updated_at` cambió tras `UPDATE` (`updated_at_changed = true`).
+- [x] Existe un trigger `AFTER INSERT` en `auth.users` que crea la fila correspondiente en `public.users` leyendo `daycare_id`, `role` y `full_name` desde `raw_app_meta_data` (app metadata), y la función del trigger es `SECURITY DEFINER` en un schema no expuesto con `search_path = ''`. ✅ Pass — trigger `on_auth_user_created` AFTER INSERT en `auth.users` → `private.handle_auth_user_created` (`prosecdef=true`, `proconfig=search_path=""`); lee `new.raw_app_meta_data` (desviación documentada en la migración).
+- [x] `alter table public.users enable row level security` está aplicado y existe una policy `SELECT` para `to authenticated` que permite leer solo la propia fila (`id = auth.uid()`). ✅ Pass — `relrowsecurity=true` en `users`; policy `users_select_own_profile` (SELECT, `to authenticated`, `using (id = (select auth.uid()))`) (local y remoto).
+- [x] `public.daycares` tiene una policy `SELECT` para `to authenticated` que permite leer únicamente la guardería asociada al perfil del usuario autenticado (resuelta vía `public.users`), reemplazando el estado sin policies de SPEC 07. ✅ Pass — policy `daycares_select_own_daycare` (SELECT, `to authenticated`, `using (exists (select 1 from public.users u where u.daycare_id = daycares.id and u.id = (select auth.uid())))`) (local y remoto).
+- [x] `anon` y `authenticated` no tienen privilegios de tabla sobre `public.users`; `public.users` no se expone a la Data API en este spec. Los grants sobre `public.daycares` quedan limitados al mínimo requerido por la policy de lectura autenticada. ✅ Pass — `has_table_privilege`: `users` sin SELECT/INSERT/UPDATE/DELETE para `anon` ni `authenticated`; `daycares`: `anon` sin acceso, `authenticated` solo SELECT (local y remoto).
+- [x] Existe un usuario staff de prueba real en `auth.users` con email `staff@salasoles.test` y su fila en `public.users` con `daycare_id = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d'`, `role = 'staff'` y `status = 'active'`, creada por el trigger. ✅ Pass — local y remoto: `auth.users` tiene `staff@salasoles.test` y `public.users` con `role=staff`, `status=active`, `daycare_id=a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d`, `full_name='Staff Sala Soles'` (conteo = 1).
+- [x] La contraseña del staff de prueba no aparece en la migración, en el spec, en el diff ni en archivos commiteados. ✅ Pass — contraseña generada y usada solo en el alta (local/remoto); nunca escrita en archivo del repo ni en la migración; `grep` confirma ausencia en `supabase/migrations/..._create_users_table.sql`.
+- [x] `supabase db reset` aplica la migración sin errores y `supabase db push --remote` la aplica al proyecto linkeado. ✅ Pass — `supabase db reset` aplicó las 3 migraciones sin errores; `supabase db push --remote --yes` aplicó `20261119165356_create_users_table.sql` en `OpenDayCare` (producción); `migration list --remote` la confirma aplicada.
+- [x] La verificación con `execute_sql` confirma enums, estructura, RLS, policies, triggers y perfil staff en el entorno objetivo; `get_advisors` no reporta hallazgos críticos derivados de esta migración. ✅ Pass — verificación equivalente con `supabase db query`/`db advisors` (CLI 3.2.0; MCP no disponible en sesión): enums, columnas, FKs, RLS, policies, triggers y perfil staff confirmados local y remoto. Advisors: solo `INFO unused_index` (esperado en índice nuevo) y `WARN` preexistentes (`rls_auto_enable` público, protección de contraseñas filtradas), ninguno crítico derivado de esta migración.
+- [x] No se agregaron dependencias npm, código en `app/`, variables `NEXT_PUBLIC_*` ni cambios en specs 01–07. ✅ Pass — `package.json`/`app/` sin cambios; sin `NEXT_PUBLIC_*`; specs 01–07 sin modificaciones.
 
 ## Decisions
 
@@ -128,3 +128,24 @@ Convenciones y notas de modelo:
 - Exposición de `users` a Data API, tests pgTAP, seeds masivos o gestión de credenciales en repositorio.
 
 Cada uno de esos puntos, si se aborda, irá en su propio spec.
+
+## Verification
+
+> **Date:** 2026-11-19 · **Verified by:** spec-verifier (`opencode/nemotron-3.5-super-vl-free`)
+> **Result:** 13/13 criteria passed
+
+| # | Criterion | Result | Evidence |
+| --- | --- | --- | --- |
+| 1 | Migración creada con CLI y aplicada | ✅ Pass | `supabase/migrations/20261119165356_create_users_table.sql`; `supabase migration new create_users_table`; `db reset` / `db push --remote --yes` |
+| 2 | ENUMs `user_role` / `user_status` | ✅ Pass | `pg_type`/`pg_enum`: `user_role={staff,parent,admin}`, `user_status={pending,active}` (local y remoto) |
+| 3 | `public.users` columnas/tipos/defaults/FKs | ✅ Pass | `pg_attribute`/`information_schema` local y remoto; `relrowsecurity=true` |
+| 4 | `updated_at` automático en UPDATE | ✅ Pass | trigger `users_set_updated_at` → `private.set_users_updated_at`; prueba de humo `updated_at_changed=true` |
+| 5 | Trigger provisión desde app metadata | ✅ Pass | `on_auth_user_created` AFTER INSERT → `private.handle_auth_user_created` (`secdef=true`, `search_path=""`); desviación documentada |
+| 6 | RLS `users` + policy perfil propio | ✅ Pass | `relrowsecurity=true`; `users_select_own_profile` SELECT `to authenticated` `id = (select auth.uid())` |
+| 7 | `daycares` policy por pertenencia | ✅ Pass | `daycares_select_own_daycare` SELECT `to authenticated` vía `public.users` |
+| 8 | Sin privilegios tabla en `users`; grants mínimos `daycares` | ✅ Pass | `anon`/`authenticated` sin acceso a `users`; `daycares` solo SELECT a `authenticated` |
+| 9 | Usuario staff y perfil por trigger | ✅ Pass | `staff@salasoles.test` + `public.users` `role=staff`, `status=active`, `daycare_id=seed` (local y remoto) |
+| 10 | Sin contraseña en repo | ✅ Pass | Contraseña solo en alta, nunca en archivo/migración/diff |
+| 11 | `db reset` y `db push --remote` sin errores | ✅ Pass | Migración aplicada local y remoto; `migration list --remote` confirma |
+| 12 | Verificación SQL + advisors sin críticos | ✅ Pass | `supabase db query`/`db advisors`: solo `INFO unused_index` y WARN preexistentes no derivados |
+| 13 | Sin nuevas deps, código en `app/`, `NEXT_PUBLIC_*` ni specs 01–07 | ✅ Pass | `package.json`/`app/` sin cambios; specs 01–07 sin modificaciones |
