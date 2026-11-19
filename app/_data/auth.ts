@@ -1,7 +1,3 @@
-export type LoginFixture = {
-  email: string;
-};
-
 export type ActivationFixture = {
   inviteCode: string;
   email: string;
@@ -10,10 +6,6 @@ export type ActivationFixture = {
   childLabel: string;
   invitationLabel: string;
   consentLabel: string;
-};
-
-export const loginFixture: LoginFixture = {
-  email: "caro@opendaycare.com",
 };
 
 export const activationFixture: ActivationFixture = {
