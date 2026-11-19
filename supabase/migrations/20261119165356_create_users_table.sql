@@ -68,3 +68,27 @@ create trigger on_auth_user_created
 after insert on auth.users
 for each row
 execute function private.handle_auth_user_created();
+
+-- Profiles are internal for now: no Data API access for anon/authenticated.
+revoke all on table public.users from anon, authenticated;
+
+-- daycares stays readable only by authenticated users of that daycare.
+revoke all on table public.daycares from anon, authenticated;
+grant select on table public.daycares to authenticated;
+
+create policy users_select_own_profile on public.users
+  for select
+  to authenticated
+  using (id = (select auth.uid()));
+
+create policy daycares_select_own_daycare on public.daycares
+  for select
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.users u
+      where u.daycare_id = daycares.id
+        and u.id = (select auth.uid())
+    )
+  );
