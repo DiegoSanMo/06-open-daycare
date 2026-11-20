@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  startTransition,
+  useActionState,
   useCallback,
   useEffect,
   useRef,
@@ -8,22 +10,31 @@ import {
   type FormEvent,
 } from "react";
 
+import { addKid, type AddKidState } from "@/app/_actions/children";
+import type { RoomOptionItem } from "@/app/_data/children";
 import {
-  AddKidFormValues,
+  type AddKidFormValues,
   formatBirthDate,
   isValidBirthDate,
-  roomOptions,
-  RoomOption,
 } from "@/app/_data/kids";
 
 type AddKidModalProps = {
   open: boolean;
   onClose: () => void;
+  rooms: RoomOptionItem[];
 };
 
-type FormErrors = Partial<Record<keyof AddKidFormValues, string>>;
+type ModalValues = Omit<AddKidFormValues, "room"> & { room: string };
 
-function emptyValues(): AddKidFormValues {
+type FormErrors = Partial<Record<keyof ModalValues, string>>;
+
+const initialState: AddKidState = {
+  status: "idle",
+  message: "",
+  errors: {},
+};
+
+function emptyValues(): ModalValues {
   return {
     name: "",
     birthDate: "",
@@ -68,12 +79,14 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   );
 }
 
-export function AddKidModal({ open, onClose }: AddKidModalProps) {
-  const [values, setValues] = useState<AddKidFormValues>(emptyValues);
+export function AddKidModal({ open, onClose, rooms }: AddKidModalProps) {
+  const [state, formAction, pending] = useActionState(addKid, initialState);
+  const [values, setValues] = useState<ModalValues>(emptyValues);
   const [errors, setErrors] = useState<FormErrors>({});
   const dialogRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  const successHandledRef = useRef(false);
 
   const handleClose = useCallback(() => {
     setValues(emptyValues());
@@ -122,11 +135,21 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
     };
   }, [open, handleClose]);
 
+  useEffect(() => {
+    if (state.status !== "success" || successHandledRef.current) return;
+    successHandledRef.current = true;
+    // Keep the close in the same transition as the /kids revalidation so the
+    // new row is already there when the dialog disappears.
+    startTransition(() => {
+      handleClose();
+    });
+  }, [state.status, handleClose]);
+
   if (!open) return null;
 
-  function updateValue<K extends keyof AddKidFormValues>(
+  function updateValue<K extends keyof ModalValues>(
     field: K,
-    value: AddKidFormValues[K],
+    value: ModalValues[K],
   ) {
     setValues((current) => ({ ...current, [field]: value }));
   }
@@ -148,8 +171,18 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
     }
 
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length === 0) handleClose();
+    if (Object.keys(nextErrors).length > 0) return;
+
+    const formData = new FormData(event.currentTarget);
+    startTransition(() => {
+      formAction(formData);
+    });
   }
+
+  const fieldErrors: FormErrors = {
+    ...(state.status === "error" ? state.errors : {}),
+    ...errors,
+  };
 
   const focusRingClass =
     "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
@@ -186,23 +219,34 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
               Agregar niño
             </h2>
             <button
-              className={`text-[15px] font-extrabold text-brand ${focusRingClass}`}
+              className={`text-[15px] font-extrabold text-brand disabled:cursor-not-allowed disabled:opacity-50 ${focusRingClass}`}
+              disabled={pending}
               type="submit"
             >
-              Guardar
+              {pending ? "Guardando…" : "Guardar"}
             </button>
           </div>
 
           <div className="px-[26px] py-6">
+            {state.status === "error" && state.message && (
+              <p
+                className="mb-4 rounded-[12px] border border-line bg-surface px-4 py-3 text-[13px] font-semibold text-brand"
+                role="alert"
+              >
+                {state.message}
+              </p>
+            )}
+
             <div className="mb-[18px]">
               <FieldLabel htmlFor="kid-name">NOMBRE COMPLETO</FieldLabel>
               <input
                 aria-describedby={
-                  errors.name ? "kid-name-help kid-name-error" : "kid-name-help"
+                  fieldErrors.name ? "kid-name-help kid-name-error" : "kid-name-help"
                 }
-                aria-invalid={errors.name ? true : undefined}
-                className={`${fieldBaseClass} ${errors.name ? "border-brand" : "border-field-border"} ${focusRingClass}`}
+                aria-invalid={fieldErrors.name ? true : undefined}
+                className={`${fieldBaseClass} ${fieldErrors.name ? "border-brand" : "border-field-border"} ${focusRingClass}`}
                 id="kid-name"
+                name="name"
                 onChange={(event) => updateValue("name", event.target.value)}
                 ref={nameInputRef}
                 placeholder="Ej. Martina López"
@@ -210,7 +254,7 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                 value={values.name}
               />
               <FieldHelp id="kid-name-help">Escribí nombre y apellido.</FieldHelp>
-              <FieldError id="kid-name-error" message={errors.name} />
+              <FieldError id="kid-name-error" message={fieldErrors.name} />
             </div>
 
             <div className="mb-[18px] flex gap-[14px]">
@@ -220,15 +264,16 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                 </FieldLabel>
                 <input
                   aria-describedby={
-                    errors.birthDate
+                    fieldErrors.birthDate
                       ? "kid-birth-date-help kid-birth-date-error"
                       : "kid-birth-date-help"
                   }
-                  aria-invalid={errors.birthDate ? true : undefined}
-                  className={`${fieldBaseClass} ${errors.birthDate ? "border-brand" : "border-field-border"} ${focusRingClass}`}
+                  aria-invalid={fieldErrors.birthDate ? true : undefined}
+                  className={`${fieldBaseClass} ${fieldErrors.birthDate ? "border-brand" : "border-field-border"} ${focusRingClass}`}
                   id="kid-birth-date"
                   inputMode="numeric"
                   maxLength={10}
+                  name="birthDate"
                   onChange={(event) =>
                     updateValue("birthDate", formatBirthDate(event.target.value))
                   }
@@ -242,7 +287,7 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                 </FieldHelp>
                 <FieldError
                   id="kid-birth-date-error"
-                  message={errors.birthDate}
+                  message={fieldErrors.birthDate}
                 />
               </div>
 
@@ -251,20 +296,21 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                 <div className="relative">
                   <select
                     aria-describedby={
-                      errors.room ? "kid-room-help kid-room-error" : "kid-room-help"
+                      fieldErrors.room ? "kid-room-help kid-room-error" : "kid-room-help"
                     }
-                    aria-invalid={errors.room ? true : undefined}
-                    className={`${fieldBaseClass} ${errors.room ? "border-brand" : "border-field-border"} ${focusRingClass} appearance-none pr-10 font-bold`}
+                    aria-invalid={fieldErrors.room ? true : undefined}
+                    className={`${fieldBaseClass} ${fieldErrors.room ? "border-brand" : "border-field-border"} ${focusRingClass} appearance-none pr-10 font-bold`}
                     id="kid-room"
+                    name="room"
                     onChange={(event) =>
-                      updateValue("room", event.target.value as RoomOption | "")
+                      updateValue("room", event.target.value)
                     }
                     value={values.room}
                   >
                     <option value="">Seleccione sala</option>
-                    {roomOptions.map((room) => (
-                      <option key={room} value={room}>
-                        {room}
+                    {rooms.map((room) => (
+                      <option key={room.id} value={room.id}>
+                        {room.name}
                       </option>
                     ))}
                   </select>
@@ -284,7 +330,7 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                   </svg>
                 </div>
                 <FieldHelp id="kid-room-help">Elegí la sala del niño.</FieldHelp>
-                <FieldError id="kid-room-error" message={errors.room} />
+                <FieldError id="kid-room-error" message={fieldErrors.room} />
               </div>
             </div>
 
@@ -294,6 +340,7 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                 aria-describedby="kid-allergies-help"
                 className={`${fieldBaseClass} border-field-border ${focusRingClass}`}
                 id="kid-allergies"
+                name="allergies"
                 onChange={(event) => updateValue("allergies", event.target.value)}
                 placeholder="Ej. Maní, Lactosa"
                 type="text"
@@ -310,6 +357,7 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                 aria-describedby="kid-medical-notes-help"
                 className={`${fieldBaseClass} border-field-border ${focusRingClass} min-h-[90px] resize-y leading-[1.5]`}
                 id="kid-medical-notes"
+                name="medicalNotes"
                 onChange={(event) =>
                   updateValue("medicalNotes", event.target.value)
                 }
