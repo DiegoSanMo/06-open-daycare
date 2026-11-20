@@ -20,43 +20,64 @@ async function KidsList() {
   }
 
   return (
-    <ul className="flex flex-col gap-[10px]">
-      {rooms.flatMap((room) =>
-        room.children.map((child) => (
-          <li
-            key={child.id}
-            className="rounded-[14px] border border-line bg-surface px-4 py-3 text-[14px] text-ink-body"
-          >
-            {child.name} · {child.ageLabel} · {child.roomName}
-          </li>
-        )),
-      )}
-    </ul>
+    <div className="flex flex-col gap-[22px]">
+      {rooms.map((room) => (
+        <section key={room.id}>
+          <div className="mb-[14px] flex items-center gap-3">
+            <span className="text-[12.5px] font-extrabold tracking-[0.8px] text-ink">
+              {room.name.toUpperCase()}
+            </span>
+            <span className="text-[13px] text-muted-soft">
+              {room.children.length} niños
+            </span>
+            <span className="h-px flex-1 bg-line-strong" />
+          </div>
+          {room.children.length > 0 && (
+            <div className="grid grid-cols-2 gap-[14px]">
+              {room.children.map((child) => (
+                <div
+                  key={child.id}
+                  className="rounded-[14px] border border-line bg-surface px-4 py-3 text-[14px] text-ink-body"
+                >
+                  {child.name} · {child.ageLabel} · {child.roomName}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      ))}
+    </div>
   );
 }
 
 function KidsListSkeleton() {
   return (
-    <div aria-hidden="true" className="animate-pulse">
-      <div className="mb-[14px] flex items-center gap-3">
-        <div className="h-[13px] w-24 rounded bg-line-strong" />
-        <div className="h-[13px] w-16 rounded bg-line-strong" />
-        <span className="h-px flex-1 bg-line-strong" />
-      </div>
-      <div className="grid grid-cols-2 gap-[14px]">
-        {Array.from({ length: 8 }).map((_, index) => (
-          <div
-            key={index}
-            className="flex h-[80px] items-center gap-[14px] rounded-[18px] border border-line bg-surface p-4"
-          >
-            <div className="h-12 w-12 flex-none rounded-full bg-line" />
-            <div className="flex-1 space-y-2">
-              <div className="h-[14px] w-2/3 rounded bg-line" />
-              <div className="h-[11px] w-1/2 rounded bg-line" />
-            </div>
+    <div aria-hidden="true" className="flex animate-pulse flex-col gap-[22px]">
+      {[0, 1, 2].map((section) => (
+        <section key={section}>
+          <div className="mb-[14px] flex items-center gap-3">
+            <div className="h-[13px] w-24 rounded bg-line-strong" />
+            <div className="h-[13px] w-16 rounded bg-line-strong" />
+            <span className="h-px flex-1 bg-line-strong" />
           </div>
-        ))}
-      </div>
+          {section === 0 && (
+            <div className="grid grid-cols-2 gap-[14px]">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="flex h-[80px] items-center gap-[14px] rounded-[18px] border border-line bg-surface p-4"
+                >
+                  <div className="h-12 w-12 flex-none rounded-full bg-line" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-[14px] w-2/3 rounded bg-line" />
+                    <div className="h-[11px] w-1/2 rounded bg-line" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      ))}
     </div>
   );
 }
