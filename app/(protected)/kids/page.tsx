@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { AddKidButton } from "../../_components/AddKidButton";
 import { AppShell } from "../../_components/AppShell";
+import { KidCard } from "../../_components/KidCard";
 import { getKidsWithRooms } from "../../_data/children";
 
 export const instant = false;
@@ -35,12 +36,7 @@ async function KidsList() {
           {room.children.length > 0 && (
             <div className="grid grid-cols-2 gap-[14px]">
               {room.children.map((child) => (
-                <div
-                  key={child.id}
-                  className="rounded-[14px] border border-line bg-surface px-4 py-3 text-[14px] text-ink-body"
-                >
-                  {child.name} · {child.ageLabel} · {child.roomName}
-                </div>
+                <KidCard key={child.id} child={child} />
               ))}
             </div>
           )}
