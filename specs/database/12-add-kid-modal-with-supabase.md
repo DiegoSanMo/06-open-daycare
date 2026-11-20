@@ -1,6 +1,6 @@
 # SPEC 12 — Modal "Agregar niño" conectado a Supabase
 
-> **Status:** Approved  
+> **Status:** Implemented  
 > **Depends on:** SPEC 04, SPEC 10, SPEC 11  
 > **Date:** 2026-11-20  
 > **Objective:** Reemplazar el submit inerte del modal por un `INSERT` real en `public.children`, cargar las salas desde `public.rooms` y refrescar `/kids` sin recargar la página, manteniendo el diseño y la validación de SPEC 04.
@@ -54,20 +54,20 @@ El predicate de la policy reutiliza `private.current_daycare_id()` (SPEC 10), qu
 
 ## Acceptance criteria
 
-- [ ] Existe `supabase/migrations/<timestamp>_allow_child_inserts.sql`, creada con `supabase migration new allow_child_inserts`.
-- [ ] `authenticated` tiene privilegio `INSERT` en `public.children`; `anon` no, y no se agregaron `UPDATE`/`DELETE`.
-- [ ] Existe una policy `FOR INSERT TO authenticated` con `WITH CHECK` que valida la sala contra el daycare del perfil.
-- [ ] Un insert con una sala de otra guardería falla por RLS en local y remoto.
-- [ ] El `<select>` de salas del modal muestra `rooms` de Supabase, no los fixtures `roomOptions`.
-- [ ] Enviar el formulario crea una fila en `public.children` con los valores del modal y `status = 'active'`.
-- [ ] `Maní`/`Lactosa` se persisten como `peanut`/`lactose`; tags desconocidos se normalizan a minúsculas.
-- [ ] `birth_date` se guarda en formato ISO y `enrolled_at` usa la fecha actual.
-- [ ] El modal muestra errores del servidor y no se cierra cuando el alta falla.
-- [ ] El botón `Guardar` queda deshabilitado mientras el action está pendiente.
-- [ ] Después de guardar, `/kids` muestra el niño nuevo sin recarga manual y el modal se cierra con el formulario limpio.
-- [ ] `app/_data/kids.ts`, `/kids/[id]`, `AppShell`, el feed `/` y los specs 01–11 no se modifican.
-- [ ] `npx eslint app proxy.ts utils`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
-- [ ] La consola del recorrido de alta no tiene errores.
+- [x] Existe `supabase/migrations/<timestamp>_allow_child_inserts.sql`, creada con `supabase migration new allow_child_inserts`.
+- [x] `authenticated` tiene privilegio `INSERT` en `public.children`; `anon` no, y no se agregaron `UPDATE`/`DELETE`.
+- [x] Existe una policy `FOR INSERT TO authenticated` con `WITH CHECK` que valida la sala contra el daycare del perfil.
+- [x] Un insert con una sala de otra guardería falla por RLS en local y remoto.
+- [x] El `<select>` de salas del modal muestra `rooms` de Supabase, no los fixtures `roomOptions`.
+- [x] Enviar el formulario crea una fila en `public.children` con los valores del modal y `status = 'active'`.
+- [x] `Maní`/`Lactosa` se persisten como `peanut`/`lactose`; tags desconocidos se normalizan a minúsculas.
+- [x] `birth_date` se guarda en formato ISO y `enrolled_at` usa la fecha actual.
+- [x] El modal muestra errores del servidor y no se cierra cuando el alta falla.
+- [x] El botón `Guardar` queda deshabilitado mientras el action está pendiente.
+- [x] Después de guardar, `/kids` muestra el niño nuevo sin recarga manual y el modal se cierra con el formulario limpio.
+- [x] `app/_data/kids.ts`, `/kids/[id]`, `AppShell`, el feed `/` y los specs 01–11 no se modifican.
+- [x] `npx eslint app proxy.ts utils`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
+- [x] La consola del recorrido de alta no tiene errores.
 
 ## Decisions
 
@@ -98,3 +98,16 @@ El predicate de la policy reutiliza `private.current_daycare_id()` (SPEC 10), qu
 - Otros specs, el feed, el shell ni los fixtures del perfil.
 
 Cada uno de esos puntos, si se aborda, irá en su propio spec.
+
+## Verification
+
+- **Fecha:** 2026-11-20. Rama `spec-12-add-kid-modal-with-supabase`, cerrada con aprobación del usuario.
+- **Estáticos:** `npx eslint app proxy.ts utils`, `npx tsc --noEmit` y `npm run build` (Next 16.4.6, `cacheComponents: true`) sin errores; `/kids` sigue como Partial Prerender.
+- **Migración:** `supabase/migrations/20261120184431_allow_child_inserts.sql` aplicada en local y remoto. En ambos, `authenticated` tiene `INSERT, SELECT` en `children` (no `anon`, sin `UPDATE`/`DELETE`) y existe `children_insert_own_daycare FOR INSERT TO authenticated WITH CHECK` contra `private.current_daycare_id()`.
+- **RLS remoto:** con un JWT simulado de usuario inexistente, el insert devuelve `new row violates row-level security policy for table "children"`; con el usuario staff real y su sala, el insert se acepta. Ningún registro quedó en la BD. En local se repitió con una sala de otra guardería creada para la prueba: rechazo por RLS, sin fila nueva; datos temporales eliminados (8 niños / 3 salas al finalizar).
+- **Salas reales:** el `<select>` devolvió `Seleccione sala` + `Soles`, `Luna`, `Estrellas` con los UUIDs de `public.rooms`; ya no hay import de `roomOptions` en el modal.
+- **Alta desde UI (Playwright 1440×900, servidor de producción):** con el POST del action retrasado 1,5 s, el botón mostró `Guardando…` y quedó deshabilitado con el dialog abierto. Tras el éxito se insertó `Martina López` en `Luna` con `birth_date = 2022-03-14`, `enrolled_at = 2026-11-20`, `allergy_tags = [peanut, lactose, frutos-secos]`, notas médicas, `status = active` y `photo_consent = true`; el dialog se cerró y la niña apareció en `/kids` sin recarga.
+- **Errores:** la validación en cliente mostró los 3 errores y mantuvo el dialog abierto sin llamar al action. Con una sala ajena, el servidor devolvió `No se pudo agregar el niño. Intentá nuevamente.` en `role="alert"`, el modal siguió abierto con los valores y no se insertó nada.
+- **Reapertura:** cancelar y volver a abrir deja todos los campos vacíos y sin alerts. Consola del recorrido: 0 errores y 0 warnings.
+- **Alcance:** `git diff spec-11-kids-list-with-search..HEAD --name-only` incluye solo `app/(protected)/kids/page.tsx`, `app/_actions/children.ts`, `app/_components/AddKidButton.tsx`, `app/_components/AddKidModal.tsx`, `app/_data/children.ts`, este spec y la migración. No se tocaron `app/_data/kids.ts`, `/kids/[id]`, `AppShell`, el feed ni los specs 01–11.
+- **Captura:** `.playwrights-mcp/spec12-modal-final.png` (modal reabierto, 1440×900).
