@@ -1,3 +1,5 @@
+import { connection } from "next/server";
+
 import { createClient } from "@/utils/supabase/server";
 
 export type ChildListItem = {
@@ -103,6 +105,9 @@ export async function getKidsWithRooms(): Promise<{
   rooms: RoomSection[];
   error: string | null;
 }> {
+  // Age labels depend on the current time, so this data must render at request
+  // time. The caller keeps it inside <Suspense> (Next.js 16 Cache Components).
+  await connection();
   const supabase = await createClient();
   const [roomsResult, childrenResult] = await Promise.all([
     supabase.from("rooms").select("id, name").order("name", { ascending: true }),
