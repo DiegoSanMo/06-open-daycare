@@ -8,22 +8,24 @@ import {
   type FormEvent,
 } from "react";
 
+import type { RoomOptionItem } from "@/app/_data/children";
 import {
-  AddKidFormValues,
+  type AddKidFormValues,
   formatBirthDate,
   isValidBirthDate,
-  roomOptions,
-  RoomOption,
 } from "@/app/_data/kids";
 
 type AddKidModalProps = {
   open: boolean;
   onClose: () => void;
+  rooms: RoomOptionItem[];
 };
 
-type FormErrors = Partial<Record<keyof AddKidFormValues, string>>;
+type ModalValues = Omit<AddKidFormValues, "room"> & { room: string };
 
-function emptyValues(): AddKidFormValues {
+type FormErrors = Partial<Record<keyof ModalValues, string>>;
+
+function emptyValues(): ModalValues {
   return {
     name: "",
     birthDate: "",
@@ -68,8 +70,8 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   );
 }
 
-export function AddKidModal({ open, onClose }: AddKidModalProps) {
-  const [values, setValues] = useState<AddKidFormValues>(emptyValues);
+export function AddKidModal({ open, onClose, rooms }: AddKidModalProps) {
+  const [values, setValues] = useState<ModalValues>(emptyValues);
   const [errors, setErrors] = useState<FormErrors>({});
   const dialogRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -124,9 +126,9 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
 
   if (!open) return null;
 
-  function updateValue<K extends keyof AddKidFormValues>(
+  function updateValue<K extends keyof ModalValues>(
     field: K,
-    value: AddKidFormValues[K],
+    value: ModalValues[K],
   ) {
     setValues((current) => ({ ...current, [field]: value }));
   }
@@ -257,14 +259,14 @@ export function AddKidModal({ open, onClose }: AddKidModalProps) {
                     className={`${fieldBaseClass} ${errors.room ? "border-brand" : "border-field-border"} ${focusRingClass} appearance-none pr-10 font-bold`}
                     id="kid-room"
                     onChange={(event) =>
-                      updateValue("room", event.target.value as RoomOption | "")
+                      updateValue("room", event.target.value)
                     }
                     value={values.room}
                   >
                     <option value="">Seleccione sala</option>
-                    {roomOptions.map((room) => (
-                      <option key={room} value={room}>
-                        {room}
+                    {rooms.map((room) => (
+                      <option key={room.id} value={room.id}>
+                        {room.name}
                       </option>
                     ))}
                   </select>

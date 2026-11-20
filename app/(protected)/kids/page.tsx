@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { AddKidButton } from "../../_components/AddKidButton";
 import { AppShell } from "../../_components/AppShell";
 import { KidsSearch } from "../../_components/KidsSearch";
-import { getKidsWithRooms } from "../../_data/children";
+import { getKidsWithRooms, getRooms } from "../../_data/children";
 
 export const instant = false;
 
@@ -21,6 +21,32 @@ async function KidsList() {
   }
 
   return <KidsSearch rooms={rooms} />;
+}
+
+async function AddKidAction() {
+  const { rooms, error } = await getRooms();
+
+  if (error) {
+    return (
+      <p
+        role="alert"
+        className="max-w-[260px] text-right text-[12px] font-semibold text-brand"
+      >
+        {error}
+      </p>
+    );
+  }
+
+  return <AddKidButton rooms={rooms} />;
+}
+
+function AddKidActionSkeleton() {
+  return (
+    <div
+      aria-hidden="true"
+      className="h-[43px] w-[140px] animate-pulse rounded-[14px] bg-line-strong"
+    />
+  );
 }
 
 function KidsListSkeleton() {
@@ -67,7 +93,9 @@ export default function KidsPage() {
             Niños
           </h1>
         </div>
-        <AddKidButton />
+        <Suspense fallback={<AddKidActionSkeleton />}>
+          <AddKidAction />
+        </Suspense>
       </div>
 
       <Suspense fallback={<KidsListSkeleton />}>

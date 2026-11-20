@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 
+import type { RoomOptionItem } from "@/app/_data/children";
+
 import { AddKidModal } from "./AddKidModal";
 
-export function AddKidButton() {
+export function AddKidButton({ rooms }: { rooms: RoomOptionItem[] }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -28,7 +30,7 @@ export function AddKidButton() {
         </svg>
         Agregar niño
       </button>
-      <AddKidModal onClose={() => setOpen(false)} open={open} />
+      <AddKidModal onClose={() => setOpen(false)} open={open} rooms={rooms} />
     </>
   );
 }
