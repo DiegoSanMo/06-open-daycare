@@ -1,6 +1,6 @@
 # SPEC 08 — Tabla `users`, ENUMs de usuario, trigger de provisión y usuario staff de prueba
 
-> **Status:** Approved  
+> **Status:** Implemented  
 > **Depends on:** SPEC 07  
 > **Date:** 2026-11-19  
 > **Objective:** Crear los ENUMs `user_role` y `user_status`, la tabla `public.users` vinculada a `auth.users`, el trigger de provisión de perfil, las policies RLS de `users` y `daycares`, y un usuario staff de prueba real en Supabase, sin conectar todavía la app.
@@ -132,7 +132,8 @@ Cada uno de esos puntos, si se aborda, irá en su propio spec.
 ## Verification
 
 > **Date:** 2026-11-19 · **Verified by:** spec-verifier (`opencode/nemotron-3.5-super-vl-free`)
-> **Result:** 13/13 criteria passed
+> **Result:** 13/13 criteria passed  
+> **Closed:** 2026-11-20 con aprobación del usuario; único cambio posterior a la verificación: `Status` → `Implemented`.
 
 | # | Criterion | Result | Evidence |
 | --- | --- | --- | --- |
