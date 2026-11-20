@@ -1,6 +1,6 @@
 # SPEC 10 — Tablas `rooms` y `children`, ENUM `child_status`, RLS y datos seed
 
-> **Status:** Approved  
+> **Status:** Implemented  
 > **Depends on:** SPEC 07, SPEC 08  
 > **Date:** 2026-11-19  
 > **Objective:** Crear en Supabase las tablas `public.rooms` y `public.children` con su ENUM, RLS, policies de lectura por daycare y datos seed de salas y niños, aplicados en local y remoto.
@@ -96,19 +96,19 @@ Convenciones y notas de modelo:
 
 ## Acceptance criteria
 
-- [ ] Existe `supabase/migrations/<timestamp>_create_rooms_and_children_tables.sql`, creado con `supabase migration new`.
-- [ ] `public.child_status` existe con valores exactos `active` y `archived`.
-- [ ] `public.rooms` existe con columnas, tipos, nulabilidad, defaults y FK a `public.daycares` exactos del data model.
-- [ ] `public.children` existe con columnas, tipos, nulabilidad, defaults y FK a `public.rooms` exactos del data model, incluido `allergy_tags text[] not null default '{}'`.
-- [ ] Existen los índices `rooms_daycare_id_idx`, `children_room_id_idx` y `children_status_idx`.
-- [ ] El `updated_at` de `public.children` se actualiza automáticamente en cada `UPDATE` mediante un trigger definido en la migración.
-- [ ] RLS está habilitada en `rooms` y `children`; `anon` no tiene privilegios y `authenticated` tiene solo `SELECT`.
-- [ ] La policy `SELECT` de `rooms` permite leer únicamente salas del daycare del perfil autenticado.
-- [ ] La policy `SELECT` de `children` permite leer únicamente niños cuyo room pertenece al daycare del perfil autenticado.
-- [ ] El seed tiene tres rooms para el daycare `a1b2c3d4-...` y ocho children activos en `Soles`, con las fechas, tags y notas del data model.
-- [ ] `supabase db reset` y `supabase db push --remote` aplican la migración sin errores y el seed existe en local y remoto.
-- [ ] La verificación con SQL/CLI y advisors no reporta hallazgos críticos derivados de esta migración.
-- [ ] No se crean policies de escritura, no se exponen tablas a `anon` y no hay cambios en `app/`, dependencias npm ni credenciales versionadas.
+- [x] Existe `supabase/migrations/<timestamp>_create_rooms_and_children_tables.sql`, creado con `supabase migration new`.
+- [x] `public.child_status` existe con valores exactos `active` y `archived`.
+- [x] `public.rooms` existe con columnas, tipos, nulabilidad, defaults y FK a `public.daycares` exactos del data model.
+- [x] `public.children` existe con columnas, tipos, nulabilidad, defaults y FK a `public.rooms` exactos del data model, incluido `allergy_tags text[] not null default '{}'`.
+- [x] Existen los índices `rooms_daycare_id_idx`, `children_room_id_idx` y `children_status_idx`.
+- [x] El `updated_at` de `public.children` se actualiza automáticamente en cada `UPDATE` mediante un trigger definido en la migración.
+- [x] RLS está habilitada en `rooms` y `children`; `anon` no tiene privilegios y `authenticated` tiene solo `SELECT`.
+- [x] La policy `SELECT` de `rooms` permite leer únicamente salas del daycare del perfil autenticado.
+- [x] La policy `SELECT` de `children` permite leer únicamente niños cuyo room pertenece al daycare del perfil autenticado.
+- [x] El seed tiene tres rooms para el daycare `a1b2c3d4-...` y ocho children activos en `Soles`, con las fechas, tags y notas del data model.
+- [x] `supabase db reset` y `supabase db push --remote` aplican la migración sin errores y el seed existe en local y remoto.
+- [x] La verificación con SQL/CLI y advisors no reporta hallazgos críticos derivados de esta migración.
+- [x] No se crean policies de escritura, no se exponen tablas a `anon` y no hay cambios en `app/`, dependencias npm ni credenciales versionadas.
 
 ## Decisions
 
@@ -117,6 +117,7 @@ Convenciones y notas de modelo:
 - **Sí:** `child_status` con `archived` y default `active`. Borrado lógico del esquema de referencia.
 - **Sí:** `allergy_tags text[] not null default '{}'`. Simplicidad del reference; se refuerza la nulabilidad para que la UI siempre reciba un array.
 - **Sí:** policy de lectura por pertenencia a daycare vía `rooms` y `public.users`. No existe `parent_children`, así que no hay forma de restringir padres a sus hijos todavía.
+- **Sí (desviación aprobada):** la pertenencia se resuelve con `private.current_daycare_id()` (`SECURITY DEFINER`, `search_path = ''`, `EXECUTE` solo para `authenticated`) en lugar del `exists (select 1 from public.users ...)` literal del plan. SPEC 08 revoca todo privilegio sobre `public.users` a `authenticated`, así que la expresión literal falla con `permission denied for table users`. El helper mantiene `users` sin exponer en la Data API y cumple el mismo criterio de aislamiento por daycare.
 - **Sí:** tres salas (`Soles`, `Luna`, `Estrellas`) y ocho niños en `Soles`. Coincide con `roomOptions` de SPEC 02 y con el prototipo.
 - **Sí:** fechas de nacimiento ajustadas un año. Conserva las etiquetas "3 años"/"2 años" del prototipo al calcular la edad en 2026.
 - **Sí:** función del trigger en `private`, siguiendo SPEC 08. Evita exponerla en `public`.

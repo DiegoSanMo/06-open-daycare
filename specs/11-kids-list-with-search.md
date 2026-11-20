@@ -1,6 +1,6 @@
 # SPEC 11 — Listado de niños en `/kids` con datos reales, agrupación por sala y búsqueda
 
-> **Status:** Approved  
+> **Status:** Implemented  
 > **Depends on:** SPEC 02, SPEC 09, SPEC 10  
 > **Date:** 2026-11-19  
 > **Objective:** Reemplazar los fixtures del listado `/kids` por niños y salas leídos de Supabase, con búsqueda instantánea en cliente, agrupación por sala y estados de carga y sin resultados, sin modificar `/kids/[id]`.
@@ -81,22 +81,22 @@ Convenciones:
 
 ## Acceptance criteria
 
-- [ ] Con sesión válida, `/kids` muestra tres secciones (`SOLES`, `LUNA`, `ESTRELLAS`) y `SOLES · 8 niños`, sin los ocho niños hardcodeados en el JSX de la página.
-- [ ] Los nombres, edades y salas de las tarjetas provienen de `children` y `rooms` de Supabase.
-- [ ] La edad calculada muestra `3 años` o `2 años` para los ocho niños del seed de SPEC 10.
-- [ ] El badge de Mateo es `MANÍ` y el de Tomás `LACTOSA`, derivados de `allergy_tags` y traducidos en la capa de UI.
-- [ ] Las salas sin niños se muestran con count `0` y sin tarjetas.
-- [ ] El subtítulo de cada tarjeta no incluye el texto "padres vinculados".
-- [ ] Escribir en el buscador filtra de inmediato por nombre, sin recargar la página ni emitir requests a Supabase.
-- [ ] La búsqueda ignora mayúsculas y tildes (`"sofia"` encuentra `Sofía Méndez`).
-- [ ] La búsqueda por `maní` o `lactosa` encuentra al niño correspondiente.
-- [ ] Cuando no hay coincidencias, se ocultan las secciones y aparece `No se encontraron niños`.
-- [ ] Las tarjetas enlazan a los slugs de SPEC 02 y `/kids/mateo-fernandez` sigue mostrando el perfil fixture sin cambios.
-- [ ] `app/_data/kids.ts`, `/kids/[id]`, `AppShell` y el feed `/` no se modifican.
-- [ ] La query async vive dentro de `<Suspense>` y `npm run build` pasa con `cacheComponents: true`.
-- [ ] Un error de Supabase se muestra en un `role="alert"` en español; la consola no tiene errores en el recorrido normal.
-- [ ] El listado a 1440×900 conserva fondos, sidebar, tipografía, badges y hover de SPEC 02.
-- [ ] `npx eslint app proxy.ts utils`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
+- [x] Con sesión válida, `/kids` muestra tres secciones (`SOLES`, `LUNA`, `ESTRELLAS`) y `SOLES · 8 niños`, sin los ocho niños hardcodeados en el JSX de la página.
+- [x] Los nombres, edades y salas de las tarjetas provienen de `children` y `rooms` de Supabase.
+- [x] La edad calculada muestra `3 años` o `2 años` para los ocho niños del seed de SPEC 10.
+- [x] El badge de Mateo es `MANÍ` y el de Tomás `LACTOSA`, derivados de `allergy_tags` y traducidos en la capa de UI.
+- [x] Las salas sin niños se muestran con count `0` y sin tarjetas.
+- [x] El subtítulo de cada tarjeta no incluye el texto "padres vinculados".
+- [x] Escribir en el buscador filtra de inmediato por nombre, sin recargar la página ni emitir requests a Supabase.
+- [x] La búsqueda ignora mayúsculas y tildes (`"sofia"` encuentra `Sofía Méndez`).
+- [x] La búsqueda por `maní` o `lactosa` encuentra al niño correspondiente.
+- [x] Cuando no hay coincidencias, se ocultan las secciones y aparece `No se encontraron niños`.
+- [x] Las tarjetas enlazan a los slugs de SPEC 02 y `/kids/mateo-fernandez` sigue mostrando el perfil fixture sin cambios.
+- [x] `app/_data/kids.ts`, `/kids/[id]`, `AppShell` y el feed `/` no se modifican.
+- [x] La query async vive dentro de `<Suspense>` y `npm run build` pasa con `cacheComponents: true`.
+- [x] Un error de Supabase se muestra en un `role="alert"` en español; la consola no tiene errores en el recorrido normal.
+- [x] El listado a 1440×900 conserva fondos, sidebar, tipografía, badges y hover de SPEC 02.
+- [x] `npx eslint app proxy.ts utils`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
 
 ## Decisions
 
@@ -130,3 +130,13 @@ Convenciones:
 - Cambios en el feed, el shell, SPEC 02 ni la migración de SPEC 10.
 
 Cada uno de esos puntos, si se aborda, irá en su propio spec.
+
+## Verification
+
+- **Fecha:** 2026-11-20. Rama `spec-11-kids-list-with-search`.
+- **Estáticos:** `npx eslint app proxy.ts utils`, `npx tsc --noEmit` y `npm run build` (Next 16.4.6, `cacheComponents: true`) sin errores; `/kids` queda como Partial Prerender.
+- **Datos reales:** con sesión local, `/kids` muestra `SOLES → 8 niños`, `LUNA → 0 niños`, `ESTRELLAS → 0 niños`, edades `3 años`/`2 años`, `MANÍ` en Mateo y `LACTOSA` en Tomás. Los ocho links usan los slugs de SPEC 02 y `/kids/mateo-fernandez` sigue mostrando el perfil fixture.
+- **Búsqueda (Playwright 1440×900, servidor de producción):** `mateo` → 1 tarjeta, `maní` → Mateo, `sofia` → Sofía Méndez, `zzz` → `No se encontraron niños`; al limpiar vuelven las 8. Cero requests a Supabase al tipear, sin recarga ni cambio de URL; consola con 0 errores y 0 warnings.
+- **Error de Supabase:** forzando un 500 en `/rest/v1/children` desde el servidor, `/kids` renderiza `role="alert"` con `No se pudieron cargar los niños. Intentá nuevamente.` y 0 tarjetas.
+- **Alcance:** `git diff 8b1d3f6..HEAD --name-only` solo incluye `app/(protected)/kids/page.tsx`, `app/_components/KidCard.tsx`, `app/_components/KidsSearch.tsx`, `app/_data/children.ts` y el cierre de SPEC 10. No se modificaron `app/_data/kids.ts`, `/kids/[id]`, `AppShell` ni el feed.
+- **Nota de entorno:** en `next dev` con Turbopack, acceder desde `127.0.0.1` hizo que Next bloqueara `/_next/hmr` y el input no hidraba; los recorridos se verificaron con `next start`. No afecta al código de la feature.
