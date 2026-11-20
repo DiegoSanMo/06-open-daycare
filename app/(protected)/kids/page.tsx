@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { AddKidButton } from "../../_components/AddKidButton";
 import { AppShell } from "../../_components/AppShell";
-import { KidCard } from "../../_components/KidCard";
+import { KidsSearch } from "../../_components/KidsSearch";
 import { getKidsWithRooms } from "../../_data/children";
 
 export const instant = false;
@@ -20,30 +20,7 @@ async function KidsList() {
     );
   }
 
-  return (
-    <div className="flex flex-col gap-[22px]">
-      {rooms.map((room) => (
-        <section key={room.id}>
-          <div className="mb-[14px] flex items-center gap-3">
-            <span className="text-[12.5px] font-extrabold tracking-[0.8px] text-ink">
-              {room.name.toUpperCase()}
-            </span>
-            <span className="text-[13px] text-muted-soft">
-              {room.children.length} niños
-            </span>
-            <span className="h-px flex-1 bg-line-strong" />
-          </div>
-          {room.children.length > 0 && (
-            <div className="grid grid-cols-2 gap-[14px]">
-              {room.children.map((child) => (
-                <KidCard key={child.id} child={child} />
-              ))}
-            </div>
-          )}
-        </section>
-      ))}
-    </div>
-  );
+  return <KidsSearch rooms={rooms} />;
 }
 
 function KidsListSkeleton() {
@@ -91,28 +68,6 @@ export default function KidsPage() {
           </h1>
         </div>
         <AddKidButton />
-      </div>
-
-      <div className="mb-[22px] flex items-center gap-[11px] rounded-[14px] border border-line bg-surface px-4 py-3">
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#B0A290"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="11" cy="11" r="7" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
-        <input
-          placeholder="Buscar niño…"
-          readOnly
-          aria-disabled="true"
-          className="flex-1 border-none bg-transparent text-[15px] text-ink placeholder:text-[#B6A99B] focus:outline-none"
-        />
       </div>
 
       <Suspense fallback={<KidsListSkeleton />}>
