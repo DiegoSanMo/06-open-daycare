@@ -1,11 +1,155 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
+import { createClient } from "@/utils/supabase/server";
 import { AppShell } from "../../../_components/AppShell";
 import { LinkParentButton } from "../../../_components/LinkParentButton";
-import { getKidById, kids } from "../../../_data/kids";
+import {
+  allergyBadgeLabels,
+  formatBirthDateLabel,
+  formatJoinedLabel,
+  getAgeLabel,
+  toSlug,
+} from "../../../_data/children";
+import {
+  getKidById,
+  kids,
+  relationshipLabels,
+  type Kid,
+  type LinkedParent,
+} from "../../../_data/kids";
 
 export const instant = false;
+
+type ChildRow = {
+  id: string;
+  full_name: string;
+  birth_date: string;
+  enrolled_at: string;
+  allergy_tags: string[] | null;
+  medical_notes: string | null;
+  rooms: { id: string; name: string } | null;
+};
+
+type ParentLinkRow = {
+  parent_id: string;
+  relationship: string;
+  users: { full_name: string } | { full_name: string }[] | null;
+};
+
+type PendingInvitationRow = {
+  id: string;
+  full_name: string;
+  relationship: string;
+};
+
+type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
+
+const avatarColors = ["#C9B6E8", "#A9C7E8", "#F4B8CC", "#B9DEC4", "#F4DC8E"];
+
+function initial(name: string): string {
+  return name.charAt(0).toUpperCase();
+}
+
+function avatarColor(name: string): string {
+  return avatarColors[name.charCodeAt(0) % avatarColors.length];
+}
+
+async function getLinkedParents(
+  supabase: SupabaseClient,
+  childId: string,
+): Promise<LinkedParent[]> {
+  const [linksResult, invitationsResult] = await Promise.all([
+    supabase
+      .from("parent_children")
+      .select("parent_id, relationship, users!parent_children_parent_id_fkey(full_name)")
+      .eq("child_id", childId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("invitations")
+      .select("id, full_name, relationship")
+      .eq("child_id", childId)
+      .eq("status", "pending")
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: true }),
+  ]);
+
+  const links = (linksResult.data ?? []) as unknown as ParentLinkRow[];
+  const pending = (invitationsResult.data ?? []) as unknown as PendingInvitationRow[];
+
+  return [
+    ...links.map((row) => {
+      const user = Array.isArray(row.users) ? row.users[0] : row.users;
+      const name = user?.full_name ?? "";
+      return {
+        id: row.parent_id,
+        name,
+        relation: relationshipLabels[row.relationship] ?? "Tutor/a",
+        status: "active" as const,
+        statusLabel: "activa",
+        badgeLabel: "ACTIVA",
+        initial: initial(name),
+        avatarBg: avatarColor(name),
+      };
+    }),
+    ...pending.map((row) => ({
+      id: row.id,
+      name: row.full_name,
+      relation: relationshipLabels[row.relationship] ?? "Tutor/a",
+      status: "pending" as const,
+      statusLabel: "invitación enviada",
+      badgeLabel: "PENDIENTE",
+      initial: initial(row.full_name),
+      avatarBg: avatarColor(row.full_name),
+    })),
+  ];
+}
+
+async function findDbKid(slug: string): Promise<{ childId: string; kid: Kid } | null> {
+  // Child data depends on the authenticated daycare, so it renders at request time.
+  await connection();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("children")
+    .select("id, full_name, birth_date, enrolled_at, allergy_tags, medical_notes, rooms(id, name)")
+    .order("created_at", { ascending: true });
+
+  if (error) return null;
+
+  const children = (data ?? []) as unknown as ChildRow[];
+  // Same slug rule as the kids list; the oldest match wins when names repeat.
+  const child = children.find((row) => toSlug(row.full_name) === slug);
+  if (!child) return null;
+
+  const allergies = (child.allergy_tags ?? []).map(
+    (tag) => allergyBadgeLabels[tag] ?? tag.toUpperCase(),
+  );
+  const allergiesNote = [
+    allergies.length ? `Alergias: ${allergies.join(", ")}` : "",
+    child.medical_notes ?? "",
+  ]
+    .filter(Boolean)
+    .join(". ");
+
+  return {
+    childId: child.id,
+    kid: {
+      id: child.id,
+      name: child.full_name,
+      initial: initial(child.full_name),
+      ageLabel: getAgeLabel(child.birth_date, new Date()),
+      room: child.rooms?.name ? `Sala ${child.rooms.name}` : "",
+      birthDateLabel: formatBirthDateLabel(child.birth_date),
+      joinedLabel: formatJoinedLabel(child.enrolled_at),
+      linkedParentsLabel: "",
+      linkedParents: await getLinkedParents(supabase, child.id),
+      allergiesNote: allergiesNote || undefined,
+      avatarBg: "#A9D9E8",
+      avatarFg: "#1F7A93",
+    },
+  };
+}
 
 function KidProfileFallback() {
   return (
@@ -85,7 +229,8 @@ async function KidProfileContent({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const kid = getKidById(id);
+  const fromDb = await findDbKid(id);
+  const kid = fromDb?.kid ?? getKidById(id);
 
   if (!kid) {
     notFound();
@@ -241,7 +386,11 @@ async function KidProfileContent({
                 </div>
               ))}
 
-              <LinkParentButton kidName={kid.name} />
+              <LinkParentButton
+                childId={fromDb?.childId}
+                disabled={!fromDb}
+                kidName={kid.name}
+              />
             </div>
           </div>
         </div>
