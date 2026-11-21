@@ -1,6 +1,6 @@
 # SPEC 13 — Vinculación de padre a niño por invitación, envío con Resend y activación de cuenta
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 03, SPEC 05, SPEC 08, SPEC 10, SPEC 11
 > **Date:** 2026-11-20
 > **Objective:** Persistir y enviar por Resend las invitaciones de padres generadas desde `/kids/[id]`, y crear el usuario y el vínculo en `parent_children` cuando el padre activa su cuenta con el código recibido.
@@ -112,29 +112,29 @@ Convenciones: valores persistidos en inglés; etiquetas en español solo en la c
 
 ## Acceptance criteria
 
-- [ ] Existen las dos migraciones creadas con `supabase migration new` y aplicadas en local y remoto.
-- [ ] `invitations` y `parent_children` tienen las columnas, ENUMs, defaults, FKs y `unique` de la sección Data model.
-- [ ] `anon` no tiene privilegios de tabla en `invitations`, `parent_children` ni `users`.
-- [ ] Un staff inserta una invitación para un niño de su daycare; un intento con niño de otro daycare falla por RLS.
-- [ ] `private.get_invitation_by_code` es `SECURITY DEFINER`, tiene `search_path = ''`, `grant execute to anon` y no hay policy `SELECT` anónima en `invitations`.
-- [ ] El RPC devuelve datos solo para un código vigente y no devuelve nada para un código vencido, `accepted` o inexistente.
-- [ ] El código generado tiene 5 caracteres alfanuméricos en mayúsculas, es único y vence 7 días después del alta.
-- [ ] Enviar el modal crea la fila `pending`, envía el correo por Resend y el link del correo contiene `/activate-account?code=<CODE>`.
-- [ ] El modal muestra el código real y "Vence en 7 días" en el estado de confirmación, sin el literal `7K4P9`.
-- [ ] Si Resend responde error, la invitación sigue `pending`, aparece un `role="alert"`, el modal ofrece "Reenviar correo" y el reenvío usa la misma fila.
-- [ ] El botón "Enviar invitación" queda deshabilitado con texto "Enviando…" durante la action.
-- [ ] El bloque "PADRES VINCULADOS" de `/kids/mateo-fernandez` muestra las invitaciones `pending` vigentes con badge `PENDIENTE` y los vínculos `accepted` con badge `ACTIVA`.
-- [ ] `/activate-account?code=<CODE>` precarga código, email y tarjeta del niño reales, sin los valores de `activationFixture`.
-- [ ] Sin código, con código inválido o vencido aparece "El código de invitación no es válido o venció." y el CTA está deshabilitado.
-- [ ] Activar con el código correcto crea un `auth.users` con role `parent`, su fila en `public.users` con el `daycare_id` del niño, `full_name` de la invitación y una fila en `parent_children` con la `relationship` mapeada.
-- [ ] Activar con un código válido pero otro email falla y no crea usuario ni vínculo.
-- [ ] El alta de `staff@salasoles.test` sigue creando su perfil `staff`/`active` con el trigger modificado.
-- [ ] Tras activar, la navegación completa llega a `/login` y el nuevo padre puede iniciar sesión.
-- [ ] Después del login del padre, el perfil del niño muestra el vínculo `ACTIVA` con nombre y parentesco de la invitación.
-- [ ] `raw_user_meta_data` no se usa en ninguna policy ni predicado de autorización.
-- [ ] No hay secretos de Resend en `NEXT_PUBLIC_*`, en el spec, en migraciones ni en archivos commiteados.
-- [ ] `npx eslint app proxy.ts utils`, `npx tsc --noEmit` y `npm run build` terminan sin errores con `cacheComponents: true`.
-- [ ] Los recorridos de Playwright terminan con 0 errores en consola y las capturas quedan fuera del commit.
+- [x] Existen las dos migraciones creadas con `supabase migration new` y aplicadas en local y remoto.
+- [x] `invitations` y `parent_children` tienen las columnas, ENUMs, defaults, FKs y `unique` de la sección Data model.
+- [x] `anon` no tiene privilegios de tabla en `invitations`, `parent_children` ni `users`.
+- [x] Un staff inserta una invitación para un niño de su daycare; un intento con niño de otro daycare falla por RLS.
+- [x] `private.get_invitation_by_code` es `SECURITY DEFINER`, tiene `search_path = ''`, `grant execute to anon` y no hay policy `SELECT` anónima en `invitations`.
+- [x] El RPC devuelve datos solo para un código vigente y no devuelve nada para un código vencido, `accepted` o inexistente.
+- [x] El código generado tiene 5 caracteres alfanuméricos en mayúsculas, es único y vence 7 días después del alta.
+- [x] Enviar el modal crea la fila `pending`, envía el correo por Resend y el link del correo contiene `/activate-account?code=<CODE>`.
+- [x] El modal muestra el código real y "Vence en 7 días" en el estado de confirmación, sin el literal `7K4P9`.
+- [x] Si Resend responde error, la invitación sigue `pending`, aparece un `role="alert"`, el modal ofrece "Reenviar correo" y el reenvío usa la misma fila.
+- [x] El botón "Enviar invitación" queda deshabilitado con texto "Enviando…" durante la action.
+- [x] El bloque "PADRES VINCULADOS" de `/kids/mateo-fernandez` muestra las invitaciones `pending` vigentes con badge `PENDIENTE` y los vínculos `accepted` con badge `ACTIVA`.
+- [x] `/activate-account?code=<CODE>` precarga código, email y tarjeta del niño reales, sin los valores de `activationFixture`.
+- [x] Sin código, con código inválido o vencido aparece "El código de invitación no es válido o venció." y el CTA está deshabilitado.
+- [x] Activar con el código correcto crea un `auth.users` con role `parent`, su fila en `public.users` con el `daycare_id` del niño, `full_name` de la invitación y una fila en `parent_children` con la `relationship` mapeada.
+- [x] Activar con un código válido pero otro email falla y no crea usuario ni vínculo.
+- [x] El alta de `staff@salasoles.test` sigue creando su perfil `staff`/`active` con el trigger modificado.
+- [x] Tras activar, la navegación completa llega a `/login` y el nuevo padre puede iniciar sesión.
+- [x] Después del login del padre, el perfil del niño muestra el vínculo `ACTIVA` con nombre y parentesco de la invitación.
+- [x] `raw_user_meta_data` no se usa en ninguna policy ni predicado de autorización.
+- [x] No hay secretos de Resend en `NEXT_PUBLIC_*`, en el spec, en migraciones ni en archivos commiteados.
+- [x] `npx eslint app proxy.ts utils`, `npx tsc --noEmit` y `npm run build` terminan sin errores con `cacheComponents: true`.
+- [x] Los recorridos de Playwright terminan con 0 errores en consola y las capturas quedan fuera del commit.
 
 ## Decisions
 
@@ -173,3 +173,17 @@ Convenciones: valores persistidos en inglés; etiquetas en español solo en la c
 - Cambios en `AppShell`, feed, `/kids`, specs 01–12 ni diseño responsive.
 
 Cada uno de esos puntos, si se aborda, irá en su propio spec.
+
+## Verification
+
+Fecha: 2026-11-21. Rama: `spec-13-parent-invitation-and-activation`.
+
+**Estáticos y build.** `npx eslint app proxy.ts utils`, `npx tsc --noEmit` y `npm run build` terminaron sin errores con `cacheComponents: true`; `/activate-account` y `/kids/[id]` figuran como Partial Prerender.
+
+**Migraciones y BD.** `supabase db reset` aplicó las 7 migraciones en local; `supabase db push --remote --yes` devolvió `upToDate: true`. `20261120194330` y `20261120195344` están en local y remoto. `get_advisors` no reportó hallazgos nuevos (solo WARNs preexistentes e INFOs de índices no usados). Inspección de `information_schema`/`pg_constraint`/`pg_proc`/`pg_policies`: columnas, ENUMs, FKs, `unique (code)`, `unique (parent_id, child_id)`, `relrowsecurity`, grants (`anon` sin privilegios de tabla, `authenticated` con `INSERT,SELECT` en `invitations` y `SELECT` en `parent_children`/`users`), `SECURITY DEFINER` + `search_path = ''` en `private.get_invitation_by_code`, `SECURITY INVOKER` en el wrapper público y ninguna policy con `raw_user_meta_data`.
+
+**SQL funcional (local, transacción revertida).** `staff_profile_created=t`; `rpc_pending_case_insensitive=t`; `rpc_hides_accepted=t`; `rpc_hides_expired=t`; `parent_profile_created=t`; `parent_child_link_created=t`; `invitation_marked_accepted=t`; `wrong_email_rejected=true`. RLS: `own_daycare_insert=t`, `other_daycare_insert=f`, `anon_select=f`.
+
+**Playwright 1440×900 (0 errores de consola en el recorrido final).** Login staff → `/kids/mateo-fernandez` → modal → invitación persistida `pending` con código real `07Q48` y "Vence en 7 días". Con `RESEND_API_KEY` vacío apareció el `role="alert"` de error y "Reenviar correo" reutilizó la misma fila/código (el perfil pasó a `PENDIENTE`). `/activate-account?code=NOPE1` mostró el alerta exacta con CTA deshabilitado; con `07Q48` precargó código, email y "Mateo Fernández · Sala Soles". La validación de consentimiento y el `signUp` completos crearon el perfil `parent`, el vínculo `mother` y marcaron la invitación `accepted`. Tras el logout/login del padre, el perfil del niño mostró "Lucía Prueba · Mamá · activa" con badge `ACTIVA`. Capturas en `.playwright-mcp/spec13-01…05*.png`, sin trackear.
+
+**Limitación registrada.** El envío real por Resend no se ejecutó: no se dispone del email del dueño autorizado como destinatario de prueba y se evitó enviar correo a una dirección inventada. El link `${origin}/activate-account?code=<CODE>` y el remitente se verificaron por inspección de `app/_actions/invitations.ts`, y la rama de fallo (incluido el reenvío) se verificó en el navegador. Queda pendiente únicamente una prueba de entrega con el destinatario configurado fuera del repo.
