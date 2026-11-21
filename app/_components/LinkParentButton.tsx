@@ -6,9 +6,10 @@ import { LinkParentModal } from "./LinkParentModal";
 
 type LinkParentButtonProps = {
   kidName: string;
+  childId?: string;
 };
 
-export function LinkParentButton({ kidName }: LinkParentButtonProps) {
+export function LinkParentButton({ kidName, childId }: LinkParentButtonProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -36,11 +37,14 @@ export function LinkParentButton({ kidName }: LinkParentButtonProps) {
           Vincular otro padre
         </span>
       </button>
-      <LinkParentModal
-        kidName={kidName}
-        onClose={() => setOpen(false)}
-        open={open}
-      />
+      {open ? (
+        <LinkParentModal
+          childId={childId}
+          kidName={kidName}
+          onClose={() => setOpen(false)}
+          open={open}
+        />
+      ) : null}
     </>
   );
 }
