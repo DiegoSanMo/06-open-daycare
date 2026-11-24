@@ -110,10 +110,10 @@ Notas de implementación vigentes (verificadas contra docs de Supabase y Context
 
 ## MCPs
 
-- Playwright Screenshots y cualquier cosa relacionada a Playwright tienen que estar en la carpeta .playwrights-mcp
+- Playwright Screenshots y cualquier cosa relacionada a Playwright tienen que estar en la carpeta `.playwright-mcp` (la grafía alternativa `.playwrights-mcp` también está ignorada en `.gitignore`)
 - Context7 usaremos esta mcp para traer la documentacion actualizada del framework.
 - Supabase MCP disponible en la sesión (`execute_sql`, `get_advisors`, branches, logs, etc.): usarla para inspeccionar el estado remoto y verificar cambios antes de asumir algo. Si no aparecen las herramientas, revisar autenticación OAuth / token con scope.
-- Actual Playwright output is tracked in `.playwright-mcp/`, while `.gitignore` only lists `.playwrights-mcp/*` (extra `s`), so new screenshots and logs show up in `git status` — don't commit them.
+- Actual Playwright output is written to `.playwright-mcp/`; `.gitignore` ignores both `.playwright-mcp/*` and the legacy `.playwrights-mcp/*`, so new screenshots and logs stay out of `git status` — don't commit them.
 
 ## Skills y comandos (repo-local)
 

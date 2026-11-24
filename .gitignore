@@ -41,4 +41,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.playwrights-mcp/* 
+# Playwright output (the MCP writes to .playwright-mcp; keep the legacy spelling too)
+.playwright-mcp/*
+.playwrights-mcp/*
