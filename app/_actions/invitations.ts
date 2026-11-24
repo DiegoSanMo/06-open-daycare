@@ -49,6 +49,43 @@ const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const RESEND_ERROR_MESSAGE =
   "No se pudo enviar el correo. Podés reenviarlo cuando quieras.";
 
+type ResendSendError = {
+  name?: unknown;
+  message?: unknown;
+  statusCode?: unknown;
+};
+
+function toResendErrorMessage(error: ResendSendError): string {
+  const name = typeof error.name === "string" ? error.name : "";
+  const message = typeof error.message === "string" ? error.message : "";
+  const statusCode =
+    typeof error.statusCode === "number" ? error.statusCode : undefined;
+
+  if (/only send testing emails|own email address/i.test(message)) {
+    return "El correo de prueba de Resend solo llega al email del dueño de la cuenta. Para invitar a otros correos, configurá RESEND_FROM con un dominio verificado.";
+  }
+  if (/api key is invalid|invalid api key/i.test(message)) {
+    return "La API key de Resend no es válida o fue revocada. Revisá RESEND_API_KEY.";
+  }
+  if (statusCode === 429 || /rate limit/i.test(message)) {
+    return "Resend alcanzó el límite de envíos. Probá reenviar en unos minutos.";
+  }
+  if (name === "validation_error" && /domain|from/i.test(message)) {
+    return "El remitente configurado en RESEND_FROM no es válido. Verificá el dominio en Resend.";
+  }
+
+  return RESEND_ERROR_MESSAGE;
+}
+
+function logResendFailure(context: string, error: ResendSendError): void {
+  console.error(`[invitations] ${context}`, {
+    name: typeof error.name === "string" ? error.name : undefined,
+    message: typeof error.message === "string" ? error.message : undefined,
+    statusCode:
+      typeof error.statusCode === "number" ? error.statusCode : undefined,
+  });
+}
+
 const RELATIONSHIP_VALUES: Record<string, Relationship> = {
   mother: "mother",
   mama: "mother",
@@ -145,8 +182,16 @@ async function sendInvitationEmail(
       { idempotencyKey: input.idempotencyKey },
     );
 
-    return error ? RESEND_ERROR_MESSAGE : null;
-  } catch {
+    if (error) {
+      logResendFailure("Resend rechazó el envío", error);
+      return toResendErrorMessage(error);
+    }
+    return null;
+  } catch (caught) {
+    logResendFailure("Falló la llamada a Resend", {
+      name: caught instanceof Error ? caught.name : undefined,
+      message: caught instanceof Error ? caught.message : undefined,
+    });
     return RESEND_ERROR_MESSAGE;
   }
 }
