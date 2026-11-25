@@ -101,19 +101,54 @@ Notas de implementación vigentes (verificadas contra docs de Supabase y Context
 - `SECURITY DEFINER` bypasea RLS: evitarlo salvo que sea imprescindible. Vistas con `security_invoker = true` (Postgres 15+). Storage upsert requiere `INSERT + SELECT + UPDATE`.
 - Antes de escribir o cambiar SQL (tablas, columnas, índices, migraciones, RLS, triggers, funciones) cargar `supabase-postgres-best-practices`; para cualquier otra tarea de Supabase cargar `supabase`.
 
-## Spec verifier
+## Agentes del proyecto (subagentes)
 
-- **Agent:** `spec-verifier` (`.opencode/agents/spec-verifier.md`), project-level primary agent on `opencode/nemotron-3.5-super-vl-free`.
-- **How to invoke:** select the `spec-verifier` agent with **Tab** and pass the spec to verify (`01-home-feed`, `01`, `home-feed`, or the full file name).
-- **What it does:** validates the spec is Approved/Implemented, builds a verification matrix, checks Next.js conventions with Context7, runs static checks (`npx eslint app`, `npx tsc --noEmit`, `npm run build`), performs visual checks with Playwright MCP when applicable, fixes real deviations, ticks acceptance criteria with evidence, and appends/replaces a `## Verification` section.
-- **Safety:** it never edits criteria/scope/decisions, never commits/pushes/switches branches, never changes `Status` without asking, and does not leave dev servers or browsers running.
+Todos los agentes viven en `.opencode/agents/` y se invocan seleccionándolos con **Tab** en OpenCode (o mediante su comando, cuando existe), pasando en el prompt el archivo, spec o alcance concreto. Si no reciben ese objetivo, deben pedirlo y detenerse. Ninguno hace commit, push ni cambio de rama.
+
+| Agente | Archivo | Modelo | Cuándo usarlo | Edición |
+| ------ | ------- | ------ | ------------- | ------- |
+| `spec-verifier` | `.opencode/agents/spec-verifier.md` | `opencode/nemotron-3.5-super-vl-free` | Verificar criterios de aceptación de un spec aprobado | Corrige desviaciones reales en `app/` y marca criterios con evidencia en `specs/*.md`; nunca cambia criterios, estado ni decisiones |
+| `db-security-auditor` | `.opencode/agents/db-security-auditor.md` | `opencode/nemotron-3.5-super-vl-free` | Auditar RLS y aislamiento padre/niño | Solo lectura; propone SQL, lo aplica `db-migrator` |
+| `db-migrator` | `.opencode/agents/db-migrator.md` | `opencode/nemotron-3.5-super-vl-free` | Crear y aplicar migraciones de un spec de BD | Solo `supabase/migrations/*`; remoto con confirmación explícita |
+| `accessibility-checker` | `.opencode/agents/accessibility-checker.md` | `opencode/nemotron-3.5-super-vl-free` | Auditar accesibilidad WCAG 2.2 AA de un archivo | Solo lectura; reporta hallazgos, no corrige |
+| `react-best-practices` | `.opencode/agents/react-best-practices.md` | heredado de la sesión | Aplicar buenas prácticas React 19 / Next 16 a archivos puntuales | Solo la lista explícita de archivos, con confirmación por edición |
+
+### Spec verifier
+
+- **Cómo invocarlo:** seleccionar `spec-verifier` con **Tab** y pasar el spec (`01-home-feed`, `01`, `home-feed` o el nombre completo del archivo).
+- **Qué hace:** valida que el spec esté `Approved`/`Implemented`, arma una matriz de verificación, contrasta convenciones de Next.js con Context7, corre verificaciones estáticas (`npx eslint app`, `npx tsc --noEmit`, `npm run build`), revisa pantallas con Playwright MCP cuando aplica, corrige solo desviaciones reales, marca los criterios con evidencia y agrega/reemplaza la sección `## Verification`.
+- **Seguridad:** nunca edita criterios, alcance ni decisiones; no cambia el `Status` sin preguntar; no commitea, pushea ni cambia de rama; no deja servidores ni browsers abiertos. Es subagente (`mode: subagent`), no agente primary.
+
+### Database security auditor
+
+- **Cómo invocarlo:** seleccionar `db-security-auditor` con **Tab** y, opcionalmente, pasar el alcance (`all`, `rls`, `parent-child isolation`, `supabase/migrations/<file>.sql`). Sin argumento audita toda la BD.
+- **Qué hace:** revisa cobertura y políticas de RLS, prueba aislamiento negativo entre padres/niños y daycares con identidades JWT reales, revisa funciones `SECURITY DEFINER`, grants, Realtime y Storage, y consulta los advisors de Supabase. Trabaja en modo en vivo (MCP de Supabase), en modo estático (`specs/database/` y `supabase/migrations/`) o en ambos, y señala divergencias entre lo declarado y lo aplicado.
+- **Seguridad:** solo lectura; no edita archivos, no ejecuta DDL/DML ni `apply_migration`, no imprime secretos; entrega hallazgos con propuestas de SQL para que el usuario las aplique con `db-migrator`.
+
+### DB migrator
+
+- **Cómo invocarlo:** seleccionar `db-migrator` con **Tab** y pasar un spec de `specs/database/` (`NN`, `NN-slug`, slug o nombre de archivo). Solo procesa specs `Approved`/`Implemented`; sin argumento lista los disponibles y pregunta.
+- **Qué hace:** construye una matriz `migración del spec | archivo local | historial local | historial remoto | situación`, crea con `supabase migration new` solo las migraciones faltantes, carga las skills `supabase` y `supabase-postgres-best-practices`, aplica y verifica en local (`supabase migration up` o `db reset`, SQL de solo lectura y advisors), muestra `supabase db push --dry-run --remote` y aplica en remoto **con confirmación explícita**, verificando después con MCP (`list_migrations`, `execute_sql`, `get_advisors`). Usa migraciones imperativas en `supabase/migrations/`, nunca `supabase/schemas/`.
+- **Seguridad:** no modifica specs (checklist, estado ni `## Verification`), código de app ni migraciones ya aplicadas; nunca usa `apply_migration` para DDL, nunca aplica en remoto sin confirmación, no lee valores de `.env` y no commitea. Si detecta `drift`, se detiene y reporta.
+
+### Accessibility checker
+
+- **Cómo invocarlo:** seleccionar `accessibility-checker` con **Tab** y pasar una ruta de archivo concreta, o usar `/a11y <ruta>` (`.opencode/commands/a11y.md`, que delega en el agente como subagente). Sin ruta, pregunta y se detiene.
+- **Qué hace:** audita **un archivo** contra WCAG 2.2 AA con revisión estática (semántica, formularios, ARIA, foco, teclado, contraste, títulos), `npx eslint <ruta>` (solo hallazgos `jsx-a11y`) y verificación en navegador con Playwright MCP cuando la ruta es renderizable. Consulta el quickref de W3C y la guía local `node_modules/next/dist/docs/03-architecture/accessibility.md`. Reporta en el chat una tabla con severidad, criterio, `archivo:línea`, evidencia y propuesta, además del resumen `Pass`/`Fail`/`No aplicable`.
+- **Seguridad:** solo lectura; no corrige ni crea archivos, no instala `axe-core` ni dependencias, no cambia reglas de ESLint, no reporta criterios AAA como fallos AA y no deja browsers ni servidores encendidos.
+
+### React best practices
+
+- **Cómo invocarlo:** seleccionar `react-best-practices` con **Tab** y pasar una lista explícita de rutas, por ejemplo: `Usa el subagent react-best-practices en app/_components/PostCard.tsx y app/page.tsx`. Corre con contexto fresco: el agente padre debe incluir las rutas y las decisiones relevantes. Sin rutas o con un alcance ambiguo, pide precisiones y se detiene.
+- **Qué hace:** audita solo esos archivos contra las buenas prácticas vigentes de React 19 y Next.js 16, consultando Context7 y la documentación instalada en `node_modules/next/dist/docs/` (manda la versión instalada si contradice la genérica). Clasifica hallazgos como `Bloqueante` / `Debería` / `Nit`, aplica diffs mínimos sin cambiar comportamiento, diseño ni etiquetas, y verifica con `npx eslint <archivos>`, `npx tsc --noEmit` y `npm run build` cuando corresponda. Devuelve un resumen `Archivo | Cambio | Fuente | Verificación`.
+- **Seguridad:** edita solo la lista indicada y cada edición pide confirmación; no implementa features nuevas, no agrega dependencias ni `disable` de lint, no toca `references/`, `.agents/`, `.opencode/` ni outputs de Playwright, no commitea y no deja procesos abiertos.
 
 ## MCPs
 
-- Playwright Screenshots y cualquier cosa relacionada a Playwright tienen que estar en la carpeta .playwrights-mcp
+- Playwright Screenshots y cualquier cosa relacionada a Playwright tienen que estar en la carpeta `.playwright-mcp` (la grafía alternativa `.playwrights-mcp` también está ignorada en `.gitignore`)
 - Context7 usaremos esta mcp para traer la documentacion actualizada del framework.
 - Supabase MCP disponible en la sesión (`execute_sql`, `get_advisors`, branches, logs, etc.): usarla para inspeccionar el estado remoto y verificar cambios antes de asumir algo. Si no aparecen las herramientas, revisar autenticación OAuth / token con scope.
-- Actual Playwright output is tracked in `.playwright-mcp/`, while `.gitignore` only lists `.playwrights-mcp/*` (extra `s`), so new screenshots and logs show up in `git status` — don't commit them.
+- Actual Playwright output is written to `.playwright-mcp/`; `.gitignore` ignores both `.playwright-mcp/*` and the legacy `.playwrights-mcp/*`, so new screenshots and logs stay out of `git status` — don't commit them.
 
 ## Skills y comandos (repo-local)
 
@@ -125,10 +160,11 @@ Instaladas en `.agents/skills/` y fijadas con hash en `skills-lock.json` (instal
 | `spec-impl` | `klerith/fernando-skills` | `/spec-impl <feature>` (comando en `opencode.json`) | Implementa solo specs `Approved` en rama `spec-NN-slug` |
 | `supabase` | `supabase/agent-skills` | Cargar la skill (se dispara por su `description`; no tiene slash command) | Cualquier tarea de Supabase: Auth, DB, Storage, Realtime, Edge Functions, CLI, MCP, logs, RLS |
 | `supabase-postgres-best-practices` | `supabase/agent-skills` | Cargar la skill (se dispara por su `description`; no tiene slash command) | Antes de escribir/cambiar SQL, esquemas, migraciones, RLS, índices, triggers o funciones |
+| `a11y` | repo-local (`.opencode/commands/a11y.md`) | `/a11y <ruta>` | Comando slash que delega en el subagente `accessibility-checker` para auditar un archivo contra WCAG 2.2 AA |
 
 - Las skills de Supabase se activan por descripción: cargarlas antes de tocar la base de datos o de diagnosticar errores de Supabase/Postgres.
 - Si una skill da información incorrecta o le falta algo, leer `references/skill-feedback.md` dentro de esa skill.
-- **Spec verifier** — no es una skill slash; se invoca seleccionando el agente `spec-verifier` con **Tab** y pasando el spec (ej. `01-home-feed`, `01` o el slug). Verifica criterios de aceptación, corrige desviaciones reales y documenta evidencia en `## Verification`.
+- Los agentes `spec-verifier`, `db-security-auditor`, `db-migrator`, `accessibility-checker` y `react-best-practices` no son skills slash: se invocan como subagentes con **Tab**; ver **Agentes del proyecto (subagentes)** para modelo, alcance, forma de invocación y reglas de edición de cada uno.
 
 ## Reglas de codigo
 

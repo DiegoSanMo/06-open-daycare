@@ -1,6 +1,6 @@
 ---
 description: Verifies a spec's acceptance criteria end to end (commands, Next.js docs via Context7, screens via Playwright MCP), fixes real deviations, and marks the checklist with evidence.
-mode: primary
+mode: subagent
 model: opencode/nemotron-3.5-super-vl-free
 color: "#D9583C"
 permissions:

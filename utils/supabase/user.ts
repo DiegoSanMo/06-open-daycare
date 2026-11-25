@@ -6,6 +6,7 @@ import { createClient } from "./server";
 export type CurrentUserProfile = {
   fullName: string;
   initial: string;
+  role: string | null;
 };
 
 export const getCurrentUserProfile = cache(
@@ -14,7 +15,7 @@ export const getCurrentUserProfile = cache(
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("users")
-      .select("full_name")
+      .select("full_name, role")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -24,6 +25,10 @@ export const getCurrentUserProfile = cache(
       user.email ||
       "Usuario";
 
-    return { fullName, initial: fullName.charAt(0).toUpperCase() };
+    return {
+      fullName,
+      initial: fullName.charAt(0).toUpperCase(),
+      role: data?.role ?? null,
+    };
   },
 );

@@ -40,7 +40,7 @@ type ChildRow = {
   rooms: RoomRow | null;
 };
 
-const allergyBadgeLabels: Record<string, string> = {
+export const allergyBadgeLabels: Record<string, string> = {
   peanut: "MANÍ",
   lactose: "LACTOSA",
 };
@@ -75,7 +75,7 @@ const monthLabels = [
   "dic",
 ];
 
-function toSlug(value: string): string {
+export function toSlug(value: string): string {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -84,12 +84,17 @@ function toSlug(value: string): string {
     .replace(/^-|-$/g, "");
 }
 
-function formatJoinedLabel(value: string): string {
+export function formatJoinedLabel(value: string): string {
   const date = new Date(`${value}T00:00:00Z`);
   return `${monthLabels[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 }
 
-function getAgeLabel(birthDate: string, now: Date): string {
+export function formatBirthDateLabel(value: string): string {
+  const date = new Date(`${value}T00:00:00Z`);
+  return `${date.getUTCDate()} ${monthLabels[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+}
+
+export function getAgeLabel(birthDate: string, now: Date): string {
   const birth = new Date(`${birthDate}T00:00:00Z`);
   const months =
     (now.getUTCFullYear() - birth.getUTCFullYear()) * 12 +

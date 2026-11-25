@@ -5,6 +5,7 @@ import {
   useActionState,
   useCallback,
   useEffect,
+  useEffectEvent,
   useRef,
   useState,
   type FormEvent,
@@ -83,10 +84,8 @@ export function AddKidModal({ open, onClose, rooms }: AddKidModalProps) {
   const [state, formAction, pending] = useActionState(addKid, initialState);
   const [values, setValues] = useState<ModalValues>(emptyValues);
   const [errors, setErrors] = useState<FormErrors>({});
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
-  const successHandledRef = useRef(false);
 
   const handleClose = useCallback(() => {
     setValues(emptyValues());
@@ -94,56 +93,50 @@ export function AddKidModal({ open, onClose, rooms }: AddKidModalProps) {
     onClose();
   }, [onClose]);
 
-  useEffect(() => {
-    if (!open) return;
-
-    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
-    nameInputRef.current?.focus();
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        handleClose();
-        return;
-      }
-      if (event.key !== "Tab" || !dialogRef.current) return;
-
-      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      );
-      if (focusable.length === 0) return;
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      previouslyFocusedRef.current?.focus();
-    };
-  }, [open, handleClose]);
-
-  useEffect(() => {
-    if (state.status !== "success" || successHandledRef.current) return;
-    successHandledRef.current = true;
+  // Effect Events read the latest `handleClose` without making the effects
+  // below depend on the identity of the `onClose` prop.
+  const closeDialog = useEffectEvent(() => {
     // Keep the close in the same transition as the /kids revalidation so the
     // new row is already there when the dialog disappears.
     startTransition(() => {
       handleClose();
     });
-  }, [state.status, handleClose]);
+  });
+
+  useEffect(() => {
+    if (!open) return;
+
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    // `showModal()` throws if called while the dialog is already open, which
+    // happens during Strict Mode's extra setup/cleanup cycle.
+    if (!dialog.open) dialog.showModal();
+    nameInputRef.current?.focus();
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    // The native dialog handles Escape (and focus containment); syncing the
+    // `cancel` event keeps the parent state in step with the visual close.
+    function handleCancel() {
+      closeDialog();
+    }
+
+    dialog.addEventListener("cancel", handleCancel);
+    return () => {
+      dialog.removeEventListener("cancel", handleCancel);
+      document.body.style.overflow = previousOverflow;
+      if (dialog.open) dialog.close();
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (state.status !== "success") return;
+    // Each action result is a new `state` object, so consecutive submissions
+    // close the dialog even if the parent keeps this same instance mounted.
+    closeDialog();
+  }, [state]);
 
   if (!open) return null;
 
@@ -190,19 +183,15 @@ export function AddKidModal({ open, onClose, rooms }: AddKidModalProps) {
     "w-full rounded-[14px] border-[1.5px] bg-white px-4 py-[13px] text-[15px] text-ink placeholder:text-field-placeholder";
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[rgba(63,54,46,0.45)] px-6 py-10"
+    <dialog
+      aria-labelledby="add-kid-title"
+      className="mx-auto my-10 max-h-[calc(100dvh-5rem)] w-[calc(100%-3rem)] max-w-[520px] overflow-y-auto bg-transparent p-0 backdrop:bg-[rgba(63,54,46,0.45)]"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) handleClose();
       }}
+      ref={dialogRef}
     >
-      <div
-        aria-labelledby="add-kid-title"
-        aria-modal="true"
-        className="w-full max-w-[520px] overflow-hidden rounded-[24px] border border-line bg-auth-bg shadow-[0_20px_50px_-24px_rgba(63,54,46,0.35)]"
-        ref={dialogRef}
-        role="dialog"
-      >
+      <div className="w-full overflow-hidden rounded-[24px] border border-line bg-auth-bg shadow-[0_20px_50px_-24px_rgba(63,54,46,0.35)]">
         <form noValidate onSubmit={handleSubmit}>
           <div className="flex items-center justify-between border-b border-line px-[26px] py-5">
             <button
@@ -371,6 +360,6 @@ export function AddKidModal({ open, onClose, rooms }: AddKidModalProps) {
           </div>
         </form>
       </div>
-    </div>
+    </dialog>
   );
 }

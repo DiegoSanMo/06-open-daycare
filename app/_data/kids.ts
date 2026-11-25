@@ -292,13 +292,15 @@ export function isValidBirthDate(value: string): boolean {
 export const parentRelationOptions = ["Mamá", "Papá", "Tutor/a"] as const;
 export type ParentRelation = (typeof parentRelationOptions)[number];
 
+// Persisted values are English; these labels are shown in the UI only.
+export const relationshipLabels: Record<string, string> = {
+  mother: "Mamá",
+  father: "Papá",
+  guardian: "Tutor/a",
+};
+
 export type LinkParentFormValues = {
   parentName: string; // "Ej. Diego Fernández"
   email: string; // "correo@ejemplo.com"
   relation: ParentRelation; // "Mamá" por defecto
 };
-
-export const invitationFixture = {
-  code: "7K4P9",
-  expiryLabel: "Vence en 7 días",
-} as const;
