@@ -3,6 +3,12 @@ import { connection } from "next/server";
 import { getCurrentUserProfile } from "@/utils/supabase/user";
 import { teacher } from "../_data/teacher";
 
+const ROLE_LABELS: Record<string, string> = {
+  parent: "Familiar",
+  staff: teacher.role,
+  admin: "Administración",
+};
+
 export function UserIdentityFallback() {
   return (
     <>
@@ -17,7 +23,8 @@ export function UserIdentityFallback() {
 
 export async function UserIdentity() {
   await connection();
-  const { fullName, initial } = await getCurrentUserProfile();
+  const { fullName, initial, role } = await getCurrentUserProfile();
+  const roleLabel = (role && ROLE_LABELS[role]) || teacher.role;
 
   return (
     <>
@@ -28,7 +35,7 @@ export async function UserIdentity() {
         <div className="truncate text-[14px] font-extrabold text-ink">
           {fullName}
         </div>
-        <div className="text-[12px] text-muted-soft">{teacher.role}</div>
+        <div className="text-[12px] text-muted-soft">{roleLabel}</div>
       </div>
     </>
   );

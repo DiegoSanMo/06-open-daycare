@@ -108,6 +108,13 @@ Notas de implementación vigentes (verificadas contra docs de Supabase y Context
 - **What it does:** validates the spec is Approved/Implemented, builds a verification matrix, checks Next.js conventions with Context7, runs static checks (`npx eslint app`, `npx tsc --noEmit`, `npm run build`), performs visual checks with Playwright MCP when applicable, fixes real deviations, ticks acceptance criteria with evidence, and appends/replaces a `## Verification` section.
 - **Safety:** it never edits criteria/scope/decisions, never commits/pushes/switches branches, never changes `Status` without asking, and does not leave dev servers or browsers running.
 
+## Database security auditor
+
+- **Agent:** `db-security-auditor` (`.opencode/agents/db-security-auditor.md`), subagent on `opencode/nemotron-3.5-super-vl-free`.
+- **How to invoke:** select the `db-security-auditor` agent with **Tab** and, optionally, pass the scope (`all`, `rls`, `parent-child isolation`, `supabase/migrations/<file>.sql`). Without an argument it audits the whole database.
+- **What it does:** audits RLS coverage and policies, runs negative isolation checks between parents/children and daycares with real JWT identities, reviews `SECURITY DEFINER` functions, grants, Realtime and Storage, and checks Supabase security advisors. It works in live mode (Supabase MCP) and falls back to a static audit of `specs/database/` and `supabase/migrations/`.
+- **Safety:** read-only. It never edits files, never runs DDL/DML or `apply_migration`, never prints secrets, and reports findings in chat with proposed SQL for the user to apply via `db-migrator`.
+
 ## MCPs
 
 - Playwright Screenshots y cualquier cosa relacionada a Playwright tienen que estar en la carpeta `.playwright-mcp` (la grafía alternativa `.playwrights-mcp` también está ignorada en `.gitignore`)
